@@ -26,6 +26,18 @@ output/*
 !output/logs/
 output/logs/*
 !output/logs/.gitkeep
+!output/tables/
+output/tables/*
+!output/tables/.gitkeep
+!output/intermediate/
+output/intermediate/*
+!output/intermediate/.gitkeep
+!output/figures/
+output/figures/*
+!output/figures/.gitkeep
+!output/reports/
+output/reports/*
+!output/reports/.gitkeep
 
 # OS / editor
 .DS_Store

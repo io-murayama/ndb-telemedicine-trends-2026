@@ -1,0 +1,67 @@
+# 診療行為コード定義（SAP 4.1–4.3 準拠）
+# 2019–2021: オンライン診療料（加算） / 2022–: 情報通信機器を用いた初再診・外来
+
+eras:
+  legacy:
+    fiscal_years: [2019, 2020, 2021]
+    description: "オンライン診療料（112023210）時代"
+    online:
+      match: category
+      values: ["オンライン診療料"]
+    initial:
+      match: category
+      values: ["初診料"]
+    followup:
+      match: category
+      values: ["再診料", "外来診療料"]
+    trend:
+      numerator: online
+      denominator: [initial, followup]
+
+  ict:
+    fiscal_years: [2022, 2023, 2024]
+    description: "情報通信機器を用いた初再診・外来診療料時代"
+    online_initial:
+      match: name_pattern
+      pattern: "情報通信"
+      within_category: ["初診料"]
+    online_followup:
+      match: name_pattern
+      pattern: "情報通信"
+      within_category: ["再診料", "外来診療料"]
+    initial:
+      match: category
+      values: ["初診料"]
+    followup:
+      match: category
+      values: ["再診料", "外来診療料"]
+
+age_groups:
+  - "0～4歳"
+  - "5～9歳"
+  - "10～14歳"
+  - "15～19歳"
+  - "20～24歳"
+  - "25～29歳"
+  - "30～34歳"
+  - "35～39歳"
+  - "40～44歳"
+  - "45～49歳"
+  - "50～54歳"
+  - "55～59歳"
+  - "60～64歳"
+  - "65～69歳"
+  - "70～74歳"
+  - "75～79歳"
+  - "80～84歳"
+  - "85～89歳"
+  - "90歳以上"
+
+sexes:
+  - male
+  - female
+
+standardization:
+  method: direct
+  reference_years: [2022, 2023, 2024]
+  note: "医療機関所在地。基準人口は reference_years の全国年齢・性別構成。"
