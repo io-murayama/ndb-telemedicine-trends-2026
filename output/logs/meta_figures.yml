@@ -1,0 +1,13 @@
+stage: figures
+project:
+  name: ndb-telemedicine-trends-2026
+  version: 0.1.0
+  course: 2026年度公衆衛生学実習 M3
+ndb:
+  procedure_code: '112023210'
+  procedure_name: オンライン診療料
+  opendata_site: https://www.mhlw.go.jp/ndb/opendatasite/
+seeds:
+  master: 2026
+timestamp: 2026-09-01T15:05:48+0900
+r_version: 4.4.3
