@@ -1,0 +1,29 @@
+Package: ndbTelemedicineTrends2026
+Title: NDB Open Data Analysis of Online Medical Consultation Trends
+Version: 0.1.0
+Authors@R: person(
+    "Io", "Murayama",
+    email = "noreply@example.com",
+    role = c("aut", "cre")
+  )
+Description: 2026年度公衆衛生学実習（M3）向けの解析リポジトリ。
+    厚生労働省 NDB オープンデータを用いて、オンライン診療料（診療行為コード
+    112023210）の算定動向を可視化・集計する。スクリプトは scripts/、
+    共通関数は R/ に配置する。
+License: MIT + file LICENSE
+Encoding: UTF-8
+Depends:
+    R (>= 4.2)
+Imports:
+    yaml
+Suggests:
+    data.table,
+    dplyr,
+    tidyr,
+    readr,
+    ggplot2,
+    readxl,
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
+URL: https://github.com/io-murayama/ndb-telemedicine-trends-2026
+BugReports: https://github.com/io-murayama/ndb-telemedicine-trends-2026/issues

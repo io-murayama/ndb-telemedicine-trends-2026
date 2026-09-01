@@ -1,0 +1,31 @@
+# Default analysis settings — NDB open data (online medical consultation).
+
+project:
+  name: ndb-telemedicine-trends-2026
+  version: "0.1.0"
+  course: "2026年度公衆衛生学実習 M3"
+
+seeds:
+  master: 2026
+
+paths:
+  data: data
+  data_raw: data/raw
+  output: output
+  logs: output/logs
+  config: config
+  scripts: scripts
+  r: R
+
+ndb:
+  procedure_code: "112023210"
+  procedure_name: "オンライン診療料"
+  opendata_site: "https://www.mhlw.go.jp/ndb/opendatasite/"
+
+analysis:
+  # 集計軸（NDB オープンデータの公表形式に準拠）
+  strata:
+    - prefecture
+    - sex_age
+    - secondary_medical_area
+    - month

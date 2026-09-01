@@ -1,0 +1,43 @@
+# R / RStudio
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+*.Rproj.user
+.Rprofile.local
+
+# renv (keep project hooks; ignore library)
+renv/library/
+renv/local/
+renv/cellar/
+renv/lock/
+renv/python/
+renv/sandbox/
+renv/staging/
+
+# data & outputs (regenerable; keep directory via .gitkeep)
+data/*
+!data/.gitkeep
+!data/raw/
+data/raw/*
+!data/raw/.gitkeep
+output/*
+!output/.gitkeep
+!output/logs/
+output/logs/*
+!output/logs/.gitkeep
+
+# OS / editor
+.DS_Store
+*~
+*.swp
+.idea/
+.vscode/
+
+# misc
+*.html
+*.log
+.Rcheck/
+*-Ex.R
+/*.tar.gz
+/*.Rcheck
