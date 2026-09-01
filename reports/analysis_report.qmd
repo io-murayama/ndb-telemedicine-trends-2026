@@ -1,0 +1,260 @@
+---
+title: "NDB オープンデータ解析結果報告"
+subtitle: "オンライン診療利用の経年変化と年齢・性別・初再診別の差"
+author: "2026年度公衆衛生学実習（M3）"
+date: today
+lang: ja
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    toc-location: left
+    theme: cosmo
+    fig-align: center
+    embed-resources: true
+    code-fold: true
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+```{r setup}
+knitr::opts_chunk$set(fig.width = 10, fig.height = 6, dpi = 120)
+root <- if (file.exists("output/tables/national_trend.csv")) "." else ".."
+fig_dir <- file.path(root, "output", "figures")
+tab_dir <- file.path(root, "output", "tables")
+
+read_tab <- function(name) {
+  read.csv(file.path(tab_dir, name), fileEncoding = "UTF-8")
+}
+
+fmt_pct <- function(x, digits = 3) sprintf(paste0("%.", digits, "f%%"), x * 100)
+fmt_n <- function(x) format(x, big.mark = ",", scientific = FALSE)
+```
+
+## 1. はじめに
+
+本報告書は、厚生労働省 **NDB オープンデータ**（2019～2024 年度）を用い、**オンライン診療の利用動向**を統計解析計画書（SAP ver 1.1）に沿って整理したものです。
+
+### Clinical Question
+
+1. 日本におけるオンライン診療の利用は **2019～2024 年度** にどのように変化したか。
+2. **2022 年度以降** のオンライン診療利用割合は、**年齢・性別・初診／再診** によってどのように異なるか。
+
+### 制度上の主要イベント
+
+| 時期 | 内容 |
+|------|------|
+| 2018 年度 | オンライン診療料の新設 |
+| 2020 年 4 月 | COVID-19 に伴う電話・オンライン診療の特例開始 |
+| 2022 年度 | 情報通信機器（ICT）を用いた初診・再診・外来診療料の新設 |
+| 2024 年 3 月 | COVID-19 特例の終了 |
+
+::: {.callout-important}
+2019～2021 年度は **オンライン診療料（加算）**、2022 年度以降は **ICT を用いた初再診・外来** と定義が異なります。長期トレンドは **記述的** に解釈し、制度変更の因果効果は推定しません（SAP 5.1）。
+:::
+
+---
+
+## 2. 方法（概要）
+
+- **デザイン**: 反復横断研究（集計データ）
+- **データ**: NDB オープンデータ（医科・初再診料・クロス集計）
+- **主アウトカム**: 外来診療に占めるオンライン診療の割合
+  - **初診**: ICT 初診算定回数 / 全初診算定回数
+  - **再診**: ICT 再診・外来算定回数 / 全再診・外来算定回数
+- **主解析（2022～2024）**: 集計セルを単位とした **binomial regression**（log link → risk ratio）
+- **副次解析**: 都道府県別 **直接標準化**（全国年齢×性別構成を基準）
+
+---
+
+## 3. 結果
+
+### 3.1 長期トレンド（Figure 1）
+
+```{r trend-table}
+trend <- read_tab("national_trend.csv")
+trend$series <- ifelse(
+  trend$visit_type == "all_outpatient", "オンライン診療料（2019–21）",
+  ifelse(trend$visit_type == "initial", "初診（ICT）", "再診・外来（ICT）")
+)
+trend$割合 <- fmt_pct(trend$proportion, 4)
+trend$算定回数 <- fmt_n(trend$online_count)
+knitr::kable(
+  trend[, c("fiscal_year", "series", "算定回数", "割合")],
+  col.names = c("年度", "系列", "オンライン算定回数", "割合"),
+  caption = "表1. 全国オンライン診療の経年推移"
+)
+```
+
+![Figure 1. オンライン診療の経年推移](../output/figures/figure1_trend.png)
+
+#### 解釈
+
+**2019～2021 年度（legacy 時代）**
+
+- オンライン診療料の算定回数は **2,134 回（2019）→ 9,798 回（2020）→ 7,726 回（2021）** と、COVID-19 流行期（2020）に増加した後やや減少。
+- 全外来算定に対する割合は **約 0.0001～0.0007%** と極めて小さい。当時のオンライン診療は **加算** として算定される特殊な枠組みであり、初再診本体に組み込まれていない点に注意が必要。
+
+**2022～2024 年度（ICT 時代）**
+
+- **初診**の ICT 算定回数は **38.8 万 → 46.5 万 → 74.5 万** と増加し、割合は **0.17% → 0.18% → 0.29%**。
+- **再診・外来**も **55.7 万 → 68.6 万 → 113.5 万** と増加、割合は **0.05% → 0.06% → 0.09%**。
+- 2022 年度改定以降、オンライン診療は初再診・外来の本体として計上されるようになり、**算定回数・割合ともに桁違いに増加**。制度変更と普及のタイミングが一致している。
+- **初診の割合は再診・外来を一貫して上回る**（2024 年: 0.29% vs 0.09%）。初診でも ICT 利用は拡大しているが、全体に占める割合は依然として低い。
+
+---
+
+### 3.2 年齢・初再診別（Figure 2）
+
+![Figure 2. 年齢階級別オンライン診療割合（初診 vs 再診・外来）](../output/figures/figure2_age_by_visit_type.png)
+
+```{r age-2024}
+cells <- read_tab("main_analysis_cells.csv")
+age2024 <- aggregate(
+  proportion ~ age_group + visit_type,
+  data = cells[cells$fiscal_year == 2024, ],
+  FUN = mean
+)
+age2024$割合 <- fmt_pct(age2024$proportion, 3)
+age2024$種別 <- ifelse(age2024$visit_type == "initial", "初診", "再診・外来")
+knitr::kable(
+  age2024[order(age2024$age_group), c("age_group", "種別", "割合")],
+  col.names = c("年齢階級", "種別", "割合（2024）"),
+  caption = "表2. 2024 年度の年齢階級別割合（参考）"
+)
+```
+
+#### 解釈
+
+- **初診・再診ともに、若年層（とくに 0～4 歳、20～30 代）で割合が相対的に高い** 傾向。2024 年初診では 0～4 歳で約 **1.15%**、25～29 歳で約 **0.58%**。
+- **高齢ほど割合は低下**し、70 歳以上では初診 **0.03% 未満** となる年齢階級もある。デジタルアクセスや受診形態の差が反映されている可能性がある。
+- **3 年間（2022～2024）を通じて全体的に上昇**しており、制度開始初期から利用が広がりつつある。
+- 初診と再診・外来の **パターンの形は類似**（若年高・高齢低）だが、初診の方が水準が高い。
+
+---
+
+### 3.3 年齢・性別別（Figure 3）
+
+![Figure 3. 年齢・性別別オンライン診療割合](../output/figures/figure3_age_sex.png)
+
+#### 解釈
+
+- 性別ごとに **年齢パターンはおおむね同型**（若年で高く、高齢で低い）。
+- 若年層では **女性の方が割合がやや高い** 年齢帯も見られるが、差は大きくはない。詳細な男女差は次節のモデルで評価。
+- 2022 → 2024 にかけて **男女・全年齢帯で上昇傾向** が確認できる。
+
+---
+
+### 3.4 統計モデル（2022～2024、binomial regression）
+
+```{r model-contrasts}
+contrasts <- read_tab("model_key_contrasts.csv")
+contrasts$差_pp <- sprintf("%.3f pp", contrasts$abs_diff_pp)
+contrasts$RR <- ifelse(
+  is.na(contrasts$rr), "—",
+  sprintf("%.3f (95%%CI %.3f–%.3f)", contrasts$rr, contrasts$rr_lcl, contrasts$rr_ucl)
+)
+knitr::kable(
+  contrasts[, c("contrast", "RR", "差_pp")],
+  col.names = c("比較", "Risk ratio", "Absolute difference"),
+  caption = "表3. 主要 contrast（基準: 男性・初診・2022 年度・0～4 歳）"
+)
+```
+
+```{r model-effects}
+fx <- read_tab("model_fixed_effects.csv")
+key_terms <- fx[fx$term %in% c("sexfemale", "visit_typefollowup", "fiscal_year2023", "fiscal_year2024"), ]
+key_terms$RR <- sprintf("%.3f (%.3f–%.3f)", key_terms$rr, key_terms$rr_lcl, key_terms$rr_ucl)
+knitr::kable(
+  key_terms[, c("term", "RR")],
+  col.names = c("項", "Risk ratio (95%CI)"),
+  caption = "表4. 主モデルの主要固定効果"
+)
+```
+
+**モデル**: `cbind(online, non-online) ~ age + sex + visit_type + year + age:visit_type + age:year + visit_type:year`（log link、収束済み）
+
+#### 解釈
+
+| 評価項目 | 結果 | 解釈 |
+|----------|------|------|
+| 男女差 | RR = **1.019** (1.017–1.021) | 女性は男性より初診 ICT 利用リスクが **約 1.9% 高い**。NDB の大規模性から **統計的有意だが効果量は小さい**。 |
+| 初診 vs 再診 | RR = **0.328** (0.325–0.330) | 再診・外来は初診の **約 1/3** のリスク。初診の方が ICT 利用割合が高い。 |
+| 2024 vs 2022 | RR = **2.44** (2.42–2.46) | 2 年間で初診 ICT 利用リスクは **約 2.4 倍**。急速な普及を示す。 |
+| 年齢効果 | 高齢ほど RR < 1 | 基準（0～4 歳）比で高齢ほど利用リスク低下（交互作用項含む詳細は `model_fixed_effects.csv` 参照）。 |
+
+::: {.callout-note}
+SAP の方針どおり、**p 値より effect size（RR・percentage-point difference）を重視**して解釈しています。
+:::
+
+---
+
+### 3.5 副次解析：都道府県別標準化（Supplementary Figure）
+
+```{r pref-table}
+pref <- read_tab("prefecture_standardized.csv")
+pref2024 <- pref[pref$fiscal_year == 2024, ]
+pref2024 <- pref2024[order(-pref2024$standardized_proportion_pct), ]
+pref2024$割合 <- sprintf("%.3f%%", pref2024$standardized_proportion_pct)
+knitr::kable(
+  rbind(
+    head(pref2024[, c("prefecture_name", "割合")], 5),
+    tail(pref2024[, c("prefecture_name", "割合")], 5)
+  ),
+  col.names = c("都道府県", "標準化割合（2024）"),
+  caption = "表5. 都道府県別標準化割合（上位・下位5県、2024）"
+)
+```
+
+![Supplementary Figure. 都道府県別標準化割合（2024）](../output/figures/supplementary_prefecture_2024.png)
+
+![Supplementary Figure. 都道府県別標準化割合（2022–2024 平均）](../output/figures/supplementary_prefecture_pooled.png)
+
+#### 解釈
+
+- **医療機関所在地** に基づく都道府県別の **直接標準化割合**（2022～2024 年、ICT 時代）。
+- **2024 年度**: **東京都（0.57%）** が最も高く、次いで **島根県（0.14%）**、**愛知県（0.11%）** など。下位は **香川県（0.004%）** など。
+- 都道府県間で **約 100 倍以上の差** があり、地域 variation が大きい。ただし **患者居住地ではなく医療機関所在地** であるため、患者側のアクセス格差として直接解釈はできない（SAP 6）。
+- 東京の高さは、都市部の医療機関・受診行動の集積、ICT 導入の早さ等が関与している可能性がある。人口稀少県で相対的に高い例（島根）もあり、単純な都市/地方二分では説明しきれない。
+
+---
+
+## 4. 総合考察
+
+### Clinical Question への回答
+
+1. **2019～2024 年の変化**: COVID-19 期のオンライン診療料加算は限定的だったが、**2022 年度 ICT 初再診・外来の新設以降、算定回数・割合ともに急増**している。2024 年時点で初診 **0.29%**、再診・外来 **0.09%** 程度。
+2. **2022 年以降の利用パターン**: **初診 > 再診**、**若年 > 高齢**、**女性 ≥ 男性（差は小）**、**年度とともに増加**。年齢差は初診・再診で同方向。
+
+### Limitation（SAP 8 より）
+
+1. **集計データ**のため、疾患・社会経済状況・デジタルリテラシー等は評価できない。
+2. **算定回数ベース**のため、同一患者の複数回受診は区別できない。
+3. **2019～21 と 2022～24 で定義が非一貫**なため、長期単純比較には注意が必要。
+
+---
+
+## 5. 付録
+
+### 解析パイプライン
+
+```text
+02_load_opendata → 03_build_tables → 04_figures → 05_model_binomial → 06_prefecture_standardized
+```
+
+### 出力ファイル一覧
+
+| 種別 | パス |
+|------|------|
+| トレンド | `output/tables/national_trend.csv` |
+| 主解析セル | `output/tables/main_analysis_cells.csv` |
+| モデル | `output/tables/model_fixed_effects.csv` |
+| 都道府県 | `output/tables/prefecture_standardized.csv` |
+| Figure 1–3 | `output/figures/figure*.png` |
+| Supp Fig | `output/figures/supplementary_prefecture_*.png` |
+
+---
+
+*Generated from SAP ver 1.1 / ndb-telemedicine-trends-2026*

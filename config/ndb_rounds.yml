@@ -1,0 +1,67 @@
+# NDB オープンデータ各回のメタデータ（2019～2024 年度解析用）
+
+rounds:
+  ndb06_2019:
+    round: 6
+    fiscal_year: 2019
+    japanese_era: "令和元年度（平成31年度）"
+    page_id: "00010"
+    source_url: "https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/0000177221_00010.html"
+  ndb07_2020:
+    round: 7
+    fiscal_year: 2020
+    japanese_era: "令和2年度"
+    page_id: "00011"
+    source_url: "https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/0000177221_00011.html"
+  ndb08_2021:
+    round: 8
+    fiscal_year: 2021
+    japanese_era: "令和3年度"
+    page_id: "00012"
+    source_url: "https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/0000177221_00012.html"
+  ndb09_2022:
+    round: 9
+    fiscal_year: 2022
+    japanese_era: "令和4年度"
+    page_id: "00014"
+    source_url: "https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/0000177221_00014.html"
+  ndb10_2023:
+    round: 10
+    fiscal_year: 2023
+    japanese_era: "令和5年度"
+    page_id: "00016"
+    source_url: "https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/0000177221_00016.html"
+  ndb11_2024:
+    round: 11
+    fiscal_year: 2024
+    japanese_era: "令和6年度"
+    page_id: "00017"
+    source_url: "https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/0000177221_00017.html"
+    zip_url: "https://www.mhlw.go.jp/content/12400000/001742573.zip"
+    zip_note: "第11回は個別 xlsx ではなく ZIP 配布。公費レセプトを含まない医科診療行為（算定回数）"
+
+files:
+  cross_initial_prefecture_sex_age:
+    label: "【初診】都道府県性年齢別算定回数"
+    filename: "cross_initial_prefecture_sex_age.xlsx"
+  cross_followup_prefecture_sex_age:
+    label: "【再診】都道府県性年齢別算定回数"
+    filename: "cross_followup_prefecture_sex_age.xlsx"
+  cross_outpatient_prefecture_sex_age:
+    label: "【外来診療料】都道府県性年齢別算定回数"
+    filename: "cross_outpatient_prefecture_sex_age.xlsx"
+  cross_online_prefecture_sex_age:
+    label: "【オンライン診療】都道府県性年齢別算定回数"
+    filename: "cross_online_prefecture_sex_age.xlsx"
+  basic_initial_followup_sex_age:
+    label: "初再診料_性年齢別算定回数"
+    filename: "初再診料_性年齢別.xlsx"
+  basic_initial_followup_prefecture:
+    label: "初再診料_都道府県別算定回数"
+    filename: "初再診料_都道府県別.xlsx"
+  basic_initial_followup_month:
+    label: "初再診料_診療月別算定回数"
+    filename: "初再診料_診療月別.xlsx"
+  basic_initial_followup_sma:
+    label: "初再診料_二次医療圏別算定回数"
+    filename: "初再診料_二次医療圏別.xlsx"

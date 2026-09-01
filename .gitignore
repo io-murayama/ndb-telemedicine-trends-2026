@@ -15,17 +15,12 @@ renv/python/
 renv/sandbox/
 renv/staging/
 
-# data & outputs (regenerable; keep directory via .gitkeep)
+# data (regenerable; keep directory via .gitkeep)
 data/*
 !data/.gitkeep
 !data/raw/
 data/raw/*
 !data/raw/.gitkeep
-output/*
-!output/.gitkeep
-!output/logs/
-output/logs/*
-!output/logs/.gitkeep
 
 # OS / editor
 .DS_Store
@@ -36,6 +31,7 @@ output/logs/*
 
 # misc
 *.html
+!output/reports/*.html
 *.log
 .Rcheck/
 *-Ex.R
