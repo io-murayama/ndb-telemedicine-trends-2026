@@ -61,7 +61,9 @@ sexes:
   - male
   - female
 
-standardization:
-  method: direct
-  reference_years: [2022, 2023, 2024]
-  note: "医療機関所在地。基準人口は reference_years の全国年齢・性別構成。"
+per_capita:
+  method: rate_per_population
+  denominator: "総務省統計局 人口推計（都道府県別総人口、各年10月1日現在）"
+  reference_file: data/reference/prefecture_population.csv
+  unit: "10万人あたり ICT 算定回数"
+  note: "医療機関所在地。秘匿セルは 0 として扱わない。"

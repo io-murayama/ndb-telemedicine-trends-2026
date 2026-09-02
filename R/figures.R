@@ -45,6 +45,43 @@ prepare_trend_plot_data <- function(trend, visit_labels = visit_type_labels) {
   trend
 }
 
+prepare_age_plot_data <- function(cells, codes_cfg) {
+  age_cells <- aggregate_cells_by_age(cells)
+  age_levels <- codes_cfg$age_groups
+  age_cells$age_group <- factor(age_cells$age_group, levels = age_levels)
+  age_cells$visit_type_label <- factor(
+    ifelse(age_cells$visit_type == "initial", "初診", "再診・外来"),
+    levels = c("初診", "再診・外来")
+  )
+  age_cells$fiscal_year <- factor(age_cells$fiscal_year)
+  age_cells$proportion_pct <- age_cells$proportion * 100
+  age_cells
+}
+
+prepare_sex_plot_data <- function(cells) {
+  sex_cells <- aggregate_cells_by_sex(cells)
+  sex_cells$sex_label <- factor(
+    ifelse(sex_cells$sex == "male", "男", "女"),
+    levels = c("男", "女")
+  )
+  sex_cells$visit_type_label <- factor(
+    ifelse(sex_cells$visit_type == "initial", "初診", "再診・外来"),
+    levels = c("初診", "再診・外来")
+  )
+  sex_cells$fiscal_year <- factor(sex_cells$fiscal_year)
+  sex_cells$proportion_pct <- sex_cells$proportion * 100
+  sex_cells
+}
+
+prepare_change_plot_data <- function(change, codes_cfg) {
+  change$age_group <- factor(change$age_group, levels = codes_cfg$age_groups)
+  change$visit_type_label <- factor(
+    ifelse(change$visit_type == "initial", "初診", "再診・外来"),
+    levels = c("初診", "再診・外来")
+  )
+  change
+}
+
 prepare_cells_plot_data <- function(cells, codes_cfg) {
   age_levels <- codes_cfg$age_groups
   cells$age_group <- factor(cells$age_group, levels = age_levels)
@@ -189,6 +226,80 @@ plot_figure2_age_by_visit <- function(cells, codes_cfg) {
     )
 }
 
+plot_figure3_age_stratified <- function(cells, codes_cfg) {
+  require_ggplot2()
+  df <- prepare_age_plot_data(cells, codes_cfg)
+
+  ggplot2::ggplot(
+    df,
+    ggplot2::aes(age_group, proportion_pct, color = visit_type_label, group = visit_type_label)
+  ) +
+    ggplot2::geom_line(linewidth = 0.8) +
+    ggplot2::geom_point(size = 1.8) +
+    ggplot2::facet_wrap(~ fiscal_year, nrow = 1) +
+    ggplot2::scale_color_manual(values = c("#7570b3", "#e7298a")) +
+    ggplot2::labs(
+      title = "Figure 3A. 年齢階級別オンライン診療割合（性別集計）",
+      subtitle = "男女を合算した年齢階級別の割合（2022–2024）",
+      x = "年齢階級",
+      y = "割合（%）",
+      color = NULL
+    ) +
+    ggplot2::theme_bw(base_size = 10) +
+    ggplot2::theme(
+      legend.position = "bottom",
+      axis.text.x = ggplot2::element_text(angle = 90, hjust = 1, vjust = 0.5, size = 7)
+    )
+}
+
+plot_figure3_sex_stratified <- function(cells) {
+  require_ggplot2()
+  df <- prepare_sex_plot_data(cells)
+
+  ggplot2::ggplot(
+    df,
+    ggplot2::aes(sex_label, proportion_pct, fill = visit_type_label)
+  ) +
+    ggplot2::geom_col(position = ggplot2::position_dodge(width = 0.8), width = 0.7) +
+    ggplot2::facet_wrap(~ fiscal_year, nrow = 1) +
+    ggplot2::scale_fill_manual(values = c("#1b9e77", "#d95f02")) +
+    ggplot2::labs(
+      title = "Figure 3B. 性別オンライン診療割合（年齢集計）",
+      subtitle = "全年齢を合算した性別の割合（2022–2024）",
+      x = "性別",
+      y = "割合（%）",
+      fill = NULL
+    ) +
+    ggplot2::theme_bw(base_size = 10) +
+    ggplot2::theme(legend.position = "bottom")
+}
+
+plot_figure4_change_by_age <- function(change, codes_cfg, visit_type = c("initial", "followup")) {
+  require_ggplot2()
+  visit_type <- match.arg(visit_type)
+  df <- prepare_change_plot_data(change, codes_cfg)
+  df <- df[df$visit_type == visit_type, , drop = FALSE]
+
+  visit_label <- ifelse(visit_type == "initial", "初診", "再診・外来")
+  figure_suffix <- ifelse(visit_type == "initial", "A", "B")
+  bar_color <- ifelse(visit_type == "initial", "#377eb8", "#ff7f00")
+
+  ggplot2::ggplot(df, ggplot2::aes(abs_change_pp, age_group)) +
+    ggplot2::geom_col(fill = bar_color, width = 0.75) +
+    ggplot2::coord_flip() +
+    ggplot2::labs(
+      title = paste0("Figure 4", figure_suffix, ". Age-specific change from 2022 to 2024（", visit_label, "）"),
+      subtitle = "絶対差 p2024 − p2022（percentage points）。誰に普及したかを年齢階級別に示す。",
+      x = "変化量（pp）",
+      y = "年齢階級"
+    ) +
+    ggplot2::theme_bw(base_size = 10) +
+    ggplot2::theme(
+      panel.grid.major.y = ggplot2::element_blank(),
+      axis.text.y = ggplot2::element_text(size = 8)
+    )
+}
+
 plot_figure3_age_sex <- function(cells, codes_cfg) {
   require_ggplot2()
   df <- prepare_cells_plot_data(cells, codes_cfg)
@@ -224,6 +335,41 @@ save_figure <- function(plot, filename, root = project_root(), width = 10, heigh
   ggplot2::ggsave(out_path, plot = plot, width = width, height = height, dpi = 150)
   message("[save] ", out_path)
   invisible(out_path)
+}
+
+plot_supplementary_prefecture_per_capita <- function(per_capita_df, fiscal_year = NULL) {
+  require_ggplot2()
+  df <- per_capita_df
+  if (!is.null(fiscal_year)) {
+    df <- df[df$fiscal_year == fiscal_year, , drop = FALSE]
+  }
+
+  rate_col <- if ("rate_per_population" %in% names(df)) {
+    "rate_per_population"
+  } else {
+    "rate_per_population_pct"
+  }
+
+  df <- df[order(df[[rate_col]]), , drop = FALSE]
+  df$prefecture_name <- factor(df$prefecture_name, levels = df$prefecture_name)
+
+  year_label <- if (is.null(fiscal_year)) "2022–2024" else as.character(fiscal_year)
+  y_label <- if (rate_col == "rate_per_population") "10万人あたり算定回数" else "10万人あたり算定回数（‰）"
+
+  ggplot2::ggplot(df, ggplot2::aes(prefecture_name, .data[[rate_col]])) +
+    ggplot2::geom_col(fill = "#377eb8") +
+    ggplot2::coord_flip() +
+    ggplot2::labs(
+      title = "Supplementary Figure C. 都道府県別人口あたり ICT 算定回数",
+      subtitle = paste0(
+        year_label,
+        " 年度（医療機関所在地）。分母: 総務省統計局人口推計に基づく都道府県人口"
+      ),
+      x = "都道府県（医療機関所在地）",
+      y = y_label
+    ) +
+    ggplot2::theme_bw(base_size = 10) +
+    ggplot2::theme(axis.text.y = ggplot2::element_text(size = 7))
 }
 
 plot_supplementary_prefecture <- function(std_df, fiscal_year = NULL) {
