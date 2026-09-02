@@ -24,12 +24,23 @@ visit_type_labels <- c(
   followup = "再診・外来（ICT）"
 )
 
-prepare_trend_plot_data <- function(trend) {
-  trend$series <- visit_type_labels[trend$visit_type]
-  trend$series <- factor(
-    trend$series,
-    levels = unname(visit_type_labels[c("all_outpatient", "initial", "followup")])
-  )
+ict_visit_type_labels <- c(
+  initial = "初診（ICT）",
+  followup = "再診・外来（ICT）"
+)
+
+filter_ict_trend <- function(trend, fiscal_years = c(2022, 2023, 2024)) {
+  trend[trend$era == "ict" & trend$visit_type %in% c("initial", "followup") &
+    trend$fiscal_year %in% fiscal_years, , drop = FALSE]
+}
+
+filter_legacy_trend <- function(trend) {
+  trend[trend$era == "legacy" & trend$visit_type == "all_outpatient", , drop = FALSE]
+}
+
+prepare_trend_plot_data <- function(trend, visit_labels = visit_type_labels) {
+  trend$series <- visit_labels[trend$visit_type]
+  trend$series <- factor(trend$series, levels = unname(visit_labels))
   trend$proportion_pct <- trend$proportion * 100
   trend
 }
@@ -52,7 +63,8 @@ prepare_cells_plot_data <- function(cells, codes_cfg) {
 
 plot_figure1_trend <- function(trend) {
   require_ggplot2()
-  df <- prepare_trend_plot_data(trend)
+  ict <- filter_ict_trend(trend)
+  df <- prepare_trend_plot_data(ict, visit_labels = ict_visit_type_labels)
 
   count_plot <- ggplot2::ggplot(df, ggplot2::aes(fiscal_year, online_count, color = series, group = series)) +
     ggplot2::geom_line(linewidth = 0.9) +
@@ -61,7 +73,7 @@ plot_figure1_trend <- function(trend) {
     ggplot2::scale_x_continuous(breaks = sort(unique(df$fiscal_year))) +
     ggplot2::scale_y_continuous(labels = function(x) format(x, big.mark = ",", scientific = FALSE)) +
     ggplot2::labs(
-      title = "Figure 1A. オンライン診療算定回数（2019–2024）",
+      title = "Figure 1A. ICT 算定回数（2022–2024）",
       x = "年度",
       y = "算定回数",
       color = NULL
@@ -75,8 +87,8 @@ plot_figure1_trend <- function(trend) {
     ggplot2::scale_color_brewer(palette = "Dark2") +
     ggplot2::scale_x_continuous(breaks = sort(unique(df$fiscal_year))) +
     ggplot2::labs(
-      title = "Figure 1B. オンライン診療割合（2019–2024）",
-      subtitle = "2019–21 はオンライン診療料／全外来、2022–24 は初診・再診・外来別（SAP 準拠）",
+      title = "Figure 1B. ICT 利用割合（2022–2024）",
+      subtitle = "初診: ICT 初診 / 全初診、再診・外来: ICT 再診・外来 / 全再診・外来",
       x = "年度",
       y = "割合（%）",
       color = NULL
@@ -89,6 +101,67 @@ plot_figure1_trend <- function(trend) {
   }
 
   list(count = count_plot, proportion = pct_plot)
+}
+
+plot_supplementary_legacy_trend <- function(trend) {
+  require_ggplot2()
+  legacy <- filter_legacy_trend(trend)
+  if (nrow(legacy) == 0L) {
+  return(NULL)
+  }
+  legacy$series <- visit_type_labels[legacy$visit_type]
+  legacy$proportion_pct <- legacy$proportion * 100
+
+  ggplot2::ggplot(legacy, ggplot2::aes(fiscal_year, proportion_pct, color = series, group = series)) +
+    ggplot2::geom_line(linewidth = 0.9) +
+    ggplot2::geom_point(size = 2.5) +
+    ggplot2::scale_color_brewer(palette = "Dark2") +
+    ggplot2::scale_x_continuous(breaks = sort(unique(legacy$fiscal_year))) +
+    ggplot2::labs(
+      title = "Supplementary Figure B. 旧オンライン診療料（2019–2021）",
+      subtitle = "オンライン診療料 / 全外来（初診＋再診＋外来）。2022 年度以降の ICT とは定義が異なる。",
+      x = "年度",
+      y = "割合（%）",
+      color = NULL
+    ) +
+    ggplot2::theme_bw(base_size = 11) +
+    ggplot2::theme(legend.position = "bottom")
+}
+
+plot_supplementary_policy_timeline <- function() {
+  require_ggplot2()
+  events <- policy_events
+  events$y <- seq_len(nrow(events))
+
+  ggplot2::ggplot(events, ggplot2::aes(event_date, y)) +
+    ggplot2::geom_segment(
+      ggplot2::aes(xend = event_date, yend = 0),
+      linewidth = 0.8,
+      color = "#666666"
+    ) +
+    ggplot2::geom_point(size = 3, color = "#377eb8") +
+    ggplot2::geom_text(
+      ggplot2::aes(label = label),
+      hjust = 0,
+      nudge_x = 60,
+      size = 3.5
+    ) +
+    ggplot2::scale_x_date(
+      date_breaks = "1 year",
+      date_labels = "%Y"
+    ) +
+    ggplot2::scale_y_continuous(breaks = NULL, limits = c(0, nrow(events) + 0.5)) +
+    ggplot2::labs(
+      title = "Supplementary Figure A. 制度変更 timeline",
+      subtitle = "2018 / 2020 / 2022 / 2024 の主要イベント（記述用）",
+      x = "時期",
+      y = NULL
+    ) +
+    ggplot2::theme_bw(base_size = 11) +
+    ggplot2::theme(
+      panel.grid.major.y = ggplot2::element_blank(),
+      panel.grid.minor = ggplot2::element_blank()
+    )
 }
 
 plot_figure2_age_by_visit <- function(cells, codes_cfg) {
@@ -168,7 +241,7 @@ plot_supplementary_prefecture <- function(std_df, fiscal_year = NULL) {
     ggplot2::geom_col(fill = "#377eb8") +
     ggplot2::coord_flip() +
     ggplot2::labs(
-      title = "Supplementary Figure. 都道府県別年齢・性別標準化オンライン診療割合",
+      title = "Supplementary Figure C. 都道府県別年齢・性別標準化オンライン診療割合",
       subtitle = paste0(
         year_label,
         " 年度（医療機関所在地）。基準人口: ",
