@@ -35,12 +35,15 @@ fmt_n <- function(x) format(x, big.mark = ",", scientific = FALSE)
 
 ## 1. はじめに
 
-本報告書は、厚生労働省 **NDB オープンデータ**（2019～2024 年度）を用い、**オンライン診療の利用動向**を統計解析計画書（SAP ver 1.1）に沿って整理したものです。
+本報告書は、厚生労働省 **NDB オープンデータ** を用いた **2022～2024 年度の全国反復横断研究** について、統計解析計画書（SAP ver 1.1）に沿って整理したものです。
 
-### Clinical Question
+### Clinical Question（Primary）
 
-1. 日本におけるオンライン診療の利用は **2019～2024 年度** にどのように変化したか。
-2. **2022 年度以降** のオンライン診療利用割合は、**年齢・性別・初診／再診** によってどのように異なるか。
+> 2022 年度の診療報酬改定後、日本における情報通信機器を用いた診療の利用割合は 2024 年度までにどのように変化し、その変化は年齢、性別、初診／再診によって異なるか？
+
+### Supplementary（historical context）
+
+2019～2021 年度の旧「オンライン診療料」は、2022 年度以降の ICT 初再診・外来とは **診療報酬上の定義が異なる** ため、主 CQ とは連続比較せず、補足的に記述する。
 
 ### 制度上の主要イベント
 
@@ -52,14 +55,14 @@ fmt_n <- function(x) format(x, big.mark = ",", scientific = FALSE)
 | 2024 年 3 月 | COVID-19 特例の終了 |
 
 ::: {.callout-important}
-2019～2021 年度は **オンライン診療料（加算）**、2022 年度以降は **ICT を用いた初再診・外来** と定義が異なります。長期トレンドは **記述的** に解釈し、制度変更の因果効果は推定しません（SAP 5.1）。
+2019～2021 年度は **オンライン診療料（加算）**、2022 年度以降は **ICT を用いた初再診・外来** と定義が異なります。**2019～2024 を同一アウトカムとして連続表示しません。** 主 Figure は 2022～2024 の ICT のみとし、旧制度は Supplementary に分離します（SAP 5.1 / 5.1a）。
 :::
 
 ---
 
 ## 2. 方法（概要）
 
-- **デザイン**: 反復横断研究（集計データ）
+- **デザイン**: 2022～2024 年度の全国反復横断研究（集計データ）
 - **データ**: NDB オープンデータ（医科・初再診料・クロス集計）
 - **主アウトカム**: 外来診療に占めるオンライン診療の割合
   - **初診**: ICT 初診算定回数 / 全初診算定回数
@@ -71,38 +74,54 @@ fmt_n <- function(x) format(x, big.mark = ",", scientific = FALSE)
 
 ## 3. 結果
 
-### 3.1 長期トレンド（Figure 1）
+### 3.1 主解析期間のトレンド（Figure 1, 2022–2024）
 
 ```{r trend-table}
 trend <- read_tab("national_trend.csv")
-trend$series <- ifelse(
-  trend$visit_type == "all_outpatient", "オンライン診療料（2019–21）",
-  ifelse(trend$visit_type == "initial", "初診（ICT）", "再診・外来（ICT）")
-)
-trend$割合 <- fmt_pct(trend$proportion, 4)
-trend$算定回数 <- fmt_n(trend$online_count)
+ict_trend <- trend[trend$era == "ict" & trend$visit_type %in% c("initial", "followup"), ]
+ict_trend$series <- ifelse(ict_trend$visit_type == "initial", "初診（ICT）", "再診・外来（ICT）")
+ict_trend$割合 <- fmt_pct(ict_trend$proportion, 4)
+ict_trend$算定回数 <- fmt_n(ict_trend$online_count)
 knitr::kable(
-  trend[, c("fiscal_year", "series", "算定回数", "割合")],
-  col.names = c("年度", "系列", "オンライン算定回数", "割合"),
-  caption = "表1. 全国オンライン診療の経年推移"
+  ict_trend[, c("fiscal_year", "series", "算定回数", "割合")],
+  col.names = c("年度", "系列", "ICT 算定回数", "割合"),
+  caption = "表1. 全国 ICT 利用の経年推移（2022–2024）"
 )
 ```
 
-![Figure 1. オンライン診療の経年推移](../output/figures/figure1_trend.png)
+![Figure 1. ICT 利用の経年推移（2022–2024）](../output/figures/figure1_trend.png)
 
 #### 解釈
-
-**2019～2021 年度（legacy 時代）**
-
-- オンライン診療料の算定回数は **2,134 回（2019）→ 9,798 回（2020）→ 7,726 回（2021）** と、COVID-19 流行期（2020）に増加した後やや減少。
-- 全外来算定に対する割合は **約 0.0001～0.0007%** と極めて小さい。当時のオンライン診療は **加算** として算定される特殊な枠組みであり、初再診本体に組み込まれていない点に注意が必要。
 
 **2022～2024 年度（ICT 時代）**
 
 - **初診**の ICT 算定回数は **38.8 万 → 46.5 万 → 74.5 万** と増加し、割合は **0.17% → 0.18% → 0.29%**。
 - **再診・外来**も **55.7 万 → 68.6 万 → 113.5 万** と増加、割合は **0.05% → 0.06% → 0.09%**。
-- 2022 年度改定以降、オンライン診療は初再診・外来の本体として計上されるようになり、**算定回数・割合ともに桁違いに増加**。制度変更と普及のタイミングが一致している。
-- **初診の割合は再診・外来を一貫して上回る**（2024 年: 0.29% vs 0.09%）。初診でも ICT 利用は拡大しているが、全体に占める割合は依然として低い。
+- **初診の割合は再診・外来を一貫して上回る**（2024 年: 0.29% vs 0.09%）。
+
+### 3.1a 補足：制度変更 timeline と旧オンライン診療料
+
+![Supplementary Figure A. 制度変更 timeline](../output/figures/supplementary_policy_timeline.png)
+
+```{r legacy-table}
+legacy_trend <- trend[trend$era == "legacy", ]
+if (nrow(legacy_trend) > 0) {
+  legacy_trend$割合 <- fmt_pct(legacy_trend$proportion, 6)
+  legacy_trend$算定回数 <- fmt_n(legacy_trend$online_count)
+  knitr::kable(
+    legacy_trend[, c("fiscal_year", "算定回数", "割合")],
+    col.names = c("年度", "オンライン診療料算定回数", "割合（全外来比）"),
+    caption = "表1a. 旧オンライン診療料（2019–2021, Supplementary）"
+  )
+}
+```
+
+![Supplementary Figure B. 旧オンライン診療料（2019–2021）](../output/figures/supplementary_legacy_trend.png)
+
+#### 解釈（historical context）
+
+- 2019～2021 年度のオンライン診療料は **加算** として算定され、全外来に対する割合は **極めて小さい**（約 0.0001～0.0007%）。
+- COVID-19 流行期（2020）に算定回数は増加したが、2022 年度 ICT 新設後の水準とは **定義が異なる** ため直接比較しない。
 
 ---
 
@@ -208,9 +227,9 @@ knitr::kable(
 )
 ```
 
-![Supplementary Figure. 都道府県別標準化割合（2024）](../output/figures/supplementary_prefecture_2024.png)
+![Supplementary Figure C. 都道府県別標準化割合（2024）](../output/figures/supplementary_prefecture_2024.png)
 
-![Supplementary Figure. 都道府県別標準化割合（2022–2024 平均）](../output/figures/supplementary_prefecture_pooled.png)
+![Supplementary Figure C. 都道府県別標準化割合（2022–2024 平均）](../output/figures/supplementary_prefecture_pooled.png)
 
 #### 解釈
 
@@ -225,8 +244,8 @@ knitr::kable(
 
 ### Clinical Question への回答
 
-1. **2019～2024 年の変化**: COVID-19 期のオンライン診療料加算は限定的だったが、**2022 年度 ICT 初再診・外来の新設以降、算定回数・割合ともに急増**している。2024 年時点で初診 **0.29%**、再診・外来 **0.09%** 程度。
-2. **2022 年以降の利用パターン**: **初診 > 再診**、**若年 > 高齢**、**女性 ≥ 男性（差は小）**、**年度とともに増加**。年齢差は初診・再診で同方向。
+1. **2022～2024 年の変化**: ICT 初診・再診・外来の利用割合は **年度とともに増加**。2024 年時点で初診 **0.29%**、再診・外来 **0.09%** 程度。
+2. **利用パターン**: **初診 > 再診**、**若年 > 高齢**、**女性 ≥ 男性（差は小）**、**年度とともに増加**。年齢差は初診・再診で同方向。
 
 ### Limitation（SAP 8 より）
 
@@ -253,7 +272,7 @@ knitr::kable(
 | モデル | `output/tables/model_fixed_effects.csv` |
 | 都道府県 | `output/tables/prefecture_standardized.csv` |
 | Figure 1–3 | `output/figures/figure*.png` |
-| Supp Fig | `output/figures/supplementary_prefecture_*.png` |
+| Supp Fig A–C | `output/figures/supplementary_*.png` |
 
 ---
 

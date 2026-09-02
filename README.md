@@ -1,10 +1,13 @@
 # ndb-telemedicine-trends-2026
 
-**2026年度公衆衛生学実習（M3）** 向けの解析リポジトリ。厚生労働省 **NDB オープンデータ** を用いて、**オンライン診療料**（診療行為コード `112023210`）の算定動向を集計・可視化する。
+**2026年度公衆衛生学実習（M3）** 向けの解析リポジトリ。厚生労働省 **NDB オープンデータ** を用いて、**情報通信機器（ICT）を用いた診療**の利用動向を集計・可視化する。
 
+- **研究デザイン**: NDB オープンデータを用いた **2022～2024 年度の全国反復横断研究**
 - **データ**: NDB オープンデータ（匿名化・集計済み）
-- **対象**: オンライン診療料の算定回数
-- **集計軸**: 都道府県別、性・年齢別、二次医療圏別、診療月別 など（公表形式に準拠）
+- **主アウトカム**: ICT 初診・再診・外来の利用割合（2022～2024）
+- **補足**: 2019～2021 年度の旧オンライン診療料（定義が異なるため Supplementary）
+
+詳細は [統計解析計画書（SAP）](docs/statistical-analysis-plan.md) を参照。
 
 ---
 
@@ -15,28 +18,31 @@
 ```bash
 git clone git@github.com:io-murayama/ndb-telemedicine-trends-2026.git
 cd ndb-telemedicine-trends-2026
-bash scripts/bootstrap.sh   # yaml インストール + 構成チェック
+bash scripts/bootstrap.sh   # 依存パッケージ + 構成チェック
 ```
 
 | 層 | パッケージ |
 |----|------------|
 | 必須（土台） | `yaml`（`DESCRIPTION` Imports） |
-| 解析用（予定） | `data.table`, `dplyr`, `tidyr`, `readr`, `ggplot2`, `readxl`（Suggests） |
+| 解析用 | `readxl`, `ggplot2`, `patchwork`（Suggests） |
 
 R は 4.2 以降を想定。
 
 ### 2. データの配置
 
-1. [NDB オープンデータ分析サイト](https://www.mhlw.go.jp/ndb/opendatasite/) から、オンライン診療料を含む集計表をダウンロード
-2. `data/raw/` に配置（生ファイルは git 管理外）
+1. [NDB オープンデータ分析サイト](https://www.mhlw.go.jp/ndb/opendatasite/) から、対象年度の集計表をダウンロード
+2. `data/raw/ndbXX_YYYY/` に配置（生ファイルは git 管理外）
 
-### 3. 解析（今後追加予定）
+### 3. 解析パイプライン
 
 ```bash
-Rscript scripts/00_setup.R
-# Rscript scripts/01_load_opendata.R   # TODO
-# Rscript scripts/02_summarize.R       # TODO
-# Rscript scripts/03_figures.R         # TODO
+python3 scripts/01_fetch_ndb_opendata.py   # データ取得（任意）
+Rscript scripts/02_load_opendata.R
+Rscript scripts/03_build_tables.R
+Rscript scripts/04_figures.R
+Rscript scripts/05_model_binomial.R
+Rscript scripts/06_prefecture_standardized.R
+bash scripts/render_report.sh              # HTML レポート生成
 ```
 
 ---
@@ -47,22 +53,36 @@ Rscript scripts/00_setup.R
 ndb-telemedicine-trends-2026/
 ├── README.md
 ├── DESCRIPTION
-├── LICENSE
+├── docs/
+│   └── statistical-analysis-plan.md   # SAP
 ├── config/
-│   └── defaults.yml          # プロジェクト設定・NDB 対象コード
-├── R/                          # 共通関数
-│   ├── paths.R
-│   ├── config.R
-│   └── bootstrap.R
-├── scripts/
-│   ├── bootstrap.sh            # 初期セットアップ
-│   ├── 00_setup.R
-│   └── 00_check_scaffold.R
-├── data/
-│   └── raw/                    # NDB 生データ（gitignore）
-└── output/                     # 図表・集計結果（gitignore）
-    └── logs/
+│   ├── defaults.yml
+│   ├── ndb_rounds.yml
+│   └── procedure_codes.yml
+├── R/                                 # 共通関数
+├── scripts/                           # 解析スクリプト（00–06）
+├── reports/
+│   └── analysis_report.qmd
+├── data/raw/                          # NDB 生データ（gitignore）
+└── output/                            # 図表・集計結果
+    ├── tables/
+    ├── figures/
+    └── reports/
 ```
+
+---
+
+## 主な出力
+
+| 種別 | パス |
+|------|------|
+| トレンド | `output/tables/national_trend.csv` |
+| 主解析セル | `output/tables/main_analysis_cells.csv` |
+| モデル | `output/tables/model_fixed_effects.csv` |
+| 都道府県標準化 | `output/tables/prefecture_standardized.csv` |
+| Figure 1–3 | `output/figures/figure*.png` |
+| Supplementary | `output/figures/supplementary_*.png` |
+| レポート | `output/reports/analysis_report.html` |
 
 ---
 
@@ -70,20 +90,11 @@ ndb-telemedicine-trends-2026/
 
 | 項目 | 内容 |
 |------|------|
-| 診療行為コード | `112023210`（オンライン診療料） |
 | データソース | [NDB オープンデータ分析サイト](https://www.mhlw.go.jp/ndb/opendatasite/) |
 | NDB 概要 | [厚生労働省 NDB ホームページ](https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/kenkou_iryou/iryouhoken/reseputo/index.html) |
-
-第 6 回以降の NDB オープンデータでは、一部診療行為について「都道府県別／性・年齢別」のクロス集計が公表されており、オンライン診療料も対象に含まれる。
 
 ---
 
 ## ライセンス
 
 MIT License（`LICENSE` 参照）。
-
----
-
-## 関連リポジトリ
-
-- [io-murayama/ndb-telemedicine-trends](https://github.com/io-murayama/ndb-telemedicine-trends) — 同名テーマの別リポジトリ

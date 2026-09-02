@@ -22,16 +22,22 @@ cells <- utils::read.csv(cells_path, fileEncoding = "UTF-8")
 fig1 <- plot_figure1_trend(trend)
 fig2 <- plot_figure2_age_by_visit(cells, codes_cfg)
 fig3 <- plot_figure3_age_sex(cells, codes_cfg)
+fig_policy <- plot_supplementary_policy_timeline()
+fig_legacy <- plot_supplementary_legacy_trend(trend)
 
 if (inherits(fig1, "list")) {
-  save_figure(fig1$count, "figure1a_online_counts.png", root = PROJECT_ROOT, width = 9, height = 4.5)
-  save_figure(fig1$proportion, "figure1b_online_proportions.png", root = PROJECT_ROOT, width = 9, height = 4.5)
+  save_figure(fig1$count, "figure1a_ict_counts.png", root = PROJECT_ROOT, width = 9, height = 4.5)
+  save_figure(fig1$proportion, "figure1b_ict_proportions.png", root = PROJECT_ROOT, width = 9, height = 4.5)
 } else {
   save_figure(fig1, "figure1_trend.png", root = PROJECT_ROOT, width = 9, height = 8)
 }
 
 save_figure(fig2, "figure2_age_by_visit_type.png", root = PROJECT_ROOT, width = 12, height = 5)
 save_figure(fig3, "figure3_age_sex.png", root = PROJECT_ROOT, width = 12, height = 7)
+save_figure(fig_policy, "supplementary_policy_timeline.png", root = PROJECT_ROOT, width = 10, height = 4)
+if (!is.null(fig_legacy)) {
+  save_figure(fig_legacy, "supplementary_legacy_trend.png", root = PROJECT_ROOT, width = 8, height = 5)
+}
 
 message("[04_figures] done")
 write_run_meta(CFG, stage = "figures", root = PROJECT_ROOT)

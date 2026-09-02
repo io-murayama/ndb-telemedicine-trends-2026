@@ -1,7 +1,13 @@
 #' Direct age-sex standardization by prefecture (SAP secondary analysis).
 
-impute_zero <- function(x) {
-  ifelse(is.na(x), 0, x)
+safe_sum_counts <- function(x) {
+  if (length(x) == 0L || all(is.na(x))) {
+    return(NA_real_)
+  }
+  if (any(is.na(x))) {
+    return(NA_real_)
+  }
+  sum(x)
 }
 
 aggregate_cross_strata <- function(cross_df) {
@@ -12,7 +18,7 @@ aggregate_cross_strata <- function(cross_df) {
     aggregate(
       count ~ fiscal_year + prefecture_code + prefecture_name + sex + age_group,
       data = subset,
-      FUN = function(x) sum(impute_zero(x), na.rm = TRUE)
+      FUN = safe_sum_counts
     )
   }
 
@@ -28,12 +34,12 @@ aggregate_cross_strata <- function(cross_df) {
     by = c("fiscal_year", "prefecture_code", "prefecture_name", "sex", "age_group"),
     all = TRUE
   )
-  merged$online_count <- impute_zero(merged$online_count)
-  merged$denominator_count <- impute_zero(merged$denominator_count)
   merged$stratum_rate <- ifelse(
-    merged$denominator_count > 0,
-    merged$online_count / merged$denominator_count,
-    NA_real_
+    is.na(merged$online_count) |
+      is.na(merged$denominator_count) |
+      merged$denominator_count <= 0,
+    NA_real_,
+    merged$online_count / merged$denominator_count
   )
   merged
 }

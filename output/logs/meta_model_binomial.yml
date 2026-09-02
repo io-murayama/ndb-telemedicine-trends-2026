@@ -9,5 +9,5 @@ ndb:
   opendata_site: https://www.mhlw.go.jp/ndb/opendatasite/
 seeds:
   master: 2026
-timestamp: 2026-09-01T15:05:48+0900
+timestamp: 2026-09-02T10:37:06+0900
 r_version: 4.4.3
