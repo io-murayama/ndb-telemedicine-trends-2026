@@ -379,15 +379,18 @@ plot_supplementary_prefecture_per_capita_map <- function(per_capita_df, fiscal_y
     ggplot2::geom_sf(ggplot2::aes(fill = rate_per_population), color = "white", linewidth = 0.15) +
     ggplot2::scale_fill_viridis_c(
       option = "C",
-      name = "10万人あたり\n算定回数",
-      na.value = "grey85"
+      trans = "log10",
+      name = "10万人あたり\n算定回数\n（log10）",
+      na.value = "grey85",
+      breaks = scales::trans_breaks("log10", function(x) 10^x),
+      labels = scales::trans_format("log10", scales::math_format(10^.x))
     ) +
     ggplot2::coord_sf(expand = FALSE) +
     ggplot2::labs(
       title = "Supplementary Figure D. 都道府県別人口あたり ICT 算定回数（地図）",
       subtitle = paste0(
         fiscal_year,
-        " 年度（医療機関所在地）。色が濃いほど人口あたり ICT 算定回数が高い"
+        " 年度（医療機関所在地）。色は log10 スケール（東京都の外れ値を抑えて地域差を可視化）"
       ),
       x = NULL,
       y = NULL
