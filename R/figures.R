@@ -377,8 +377,9 @@ plot_supplementary_prefecture_per_capita_map <- function(per_capita_df, fiscal_y
 
   ggplot2::ggplot(merged) +
     ggplot2::geom_sf(ggplot2::aes(fill = rate_per_population), color = "white", linewidth = 0.15) +
-    ggplot2::scale_fill_viridis_c(
-      option = "C",
+    ggplot2::scale_fill_gradient(
+      low = "#eff3ff",
+      high = "#08519c",
       trans = "log10",
       name = "10万人あたり\n算定回数\n（log10）",
       na.value = "grey85",
