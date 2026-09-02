@@ -9,7 +9,7 @@ echo "[bootstrap] installing DESCRIPTION Imports (yaml) if needed..."
 Rscript -e 'pkgs <- c("yaml"); for (p in pkgs) if (!requireNamespace(p, quietly = TRUE)) install.packages(p, repos = "https://cloud.r-project.org")'
 
 echo "[bootstrap] installing analysis packages if needed..."
-Rscript -e 'pkgs <- c("readxl", "ggplot2"); for (p in pkgs) if (!requireNamespace(p, quietly = TRUE)) install.packages(p, repos = "https://cloud.r-project.org")'
+Rscript -e 'pkgs <- c("readxl", "ggplot2", "sf"); for (p in pkgs) if (!requireNamespace(p, quietly = TRUE)) install.packages(p, repos = "https://cloud.r-project.org")'
 
 echo "[bootstrap] running scaffold check..."
 Rscript scripts/00_check_scaffold.R

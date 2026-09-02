@@ -203,7 +203,7 @@ plot_supplementary_policy_timeline <- function() {
 
 plot_figure2_age_by_visit <- function(cells, codes_cfg) {
   require_ggplot2()
-  df <- prepare_cells_plot_data(cells, codes_cfg)
+  df <- prepare_age_plot_data(cells, codes_cfg)
 
   ggplot2::ggplot(
     df,
@@ -337,12 +337,10 @@ save_figure <- function(plot, filename, root = project_root(), width = 10, heigh
   invisible(out_path)
 }
 
-plot_supplementary_prefecture_per_capita <- function(per_capita_df, fiscal_year = NULL) {
+plot_supplementary_prefecture_per_capita <- function(per_capita_df, fiscal_year = 2024) {
   require_ggplot2()
-  df <- per_capita_df
-  if (!is.null(fiscal_year)) {
-    df <- df[df$fiscal_year == fiscal_year, , drop = FALSE]
-  }
+  df <- per_capita_df[per_capita_df$fiscal_year == fiscal_year, , drop = FALSE]
+  df <- order_prefectures_north_to_south(df)
 
   rate_col <- if ("rate_per_population" %in% names(df)) {
     "rate_per_population"
@@ -350,53 +348,57 @@ plot_supplementary_prefecture_per_capita <- function(per_capita_df, fiscal_year 
     "rate_per_population_pct"
   }
 
-  df <- df[order(df[[rate_col]]), , drop = FALSE]
   df$prefecture_name <- factor(df$prefecture_name, levels = df$prefecture_name)
 
-  year_label <- if (is.null(fiscal_year)) "2022–2024" else as.character(fiscal_year)
   y_label <- if (rate_col == "rate_per_population") "10万人あたり算定回数" else "10万人あたり算定回数（‰）"
 
   ggplot2::ggplot(df, ggplot2::aes(prefecture_name, .data[[rate_col]])) +
-    ggplot2::geom_col(fill = "#377eb8") +
-    ggplot2::coord_flip() +
+    ggplot2::geom_col(fill = "#377eb8", width = 0.8) +
     ggplot2::labs(
       title = "Supplementary Figure C. 都道府県別人口あたり ICT 算定回数",
       subtitle = paste0(
-        year_label,
-        " 年度（医療機関所在地）。分母: 総務省統計局人口推計に基づく都道府県人口"
+        fiscal_year,
+        " 年度（医療機関所在地・北から順）。分母: 総務省統計局人口推計に基づく都道府県人口"
       ),
       x = "都道府県（医療機関所在地）",
       y = y_label
     ) +
     ggplot2::theme_bw(base_size = 10) +
-    ggplot2::theme(axis.text.y = ggplot2::element_text(size = 7))
+    ggplot2::theme(
+      axis.text.x = ggplot2::element_text(angle = 90, hjust = 1, vjust = 0.5, size = 6)
+    )
 }
 
-plot_supplementary_prefecture <- function(std_df, fiscal_year = NULL) {
+plot_supplementary_prefecture_per_capita_map <- function(per_capita_df, fiscal_year = 2024, root = project_root()) {
   require_ggplot2()
-  df <- std_df
-  if (!is.null(fiscal_year)) {
-    df <- df[df$fiscal_year == fiscal_year, , drop = FALSE]
-  }
-  df <- df[order(df$standardized_proportion_pct), , drop = FALSE]
-  df$prefecture_name <- factor(df$prefecture_name, levels = df$prefecture_name)
+  require_sf()
+  geo <- load_prefecture_geo(root)
+  merged <- merge_prefecture_geo(geo, per_capita_df, fiscal_year = fiscal_year)
 
-  year_label <- if (is.null(fiscal_year)) "2022–2024" else as.character(fiscal_year)
-
-  ggplot2::ggplot(df, ggplot2::aes(prefecture_name, standardized_proportion_pct)) +
-    ggplot2::geom_col(fill = "#377eb8") +
-    ggplot2::coord_flip() +
-    ggplot2::labs(
-      title = "Supplementary Figure C. 都道府県別年齢・性別標準化オンライン診療割合",
-      subtitle = paste0(
-        year_label,
-        " 年度（医療機関所在地）。基準人口: ",
-        year_label,
-        " の全国年齢・性別構成"
-      ),
-      x = "都道府県（医療機関所在地）",
-      y = "標準化割合（%）"
+  ggplot2::ggplot(merged) +
+    ggplot2::geom_sf(ggplot2::aes(fill = rate_per_population), color = "white", linewidth = 0.15) +
+    ggplot2::scale_fill_gradient(
+      low = "#eff3ff",
+      high = "#08519c",
+      trans = "log10",
+      name = "10万人あたり\n算定回数\n（log10）",
+      na.value = "grey85",
+      breaks = scales::trans_breaks("log10", function(x) 10^x),
+      labels = scales::trans_format("log10", scales::math_format(10^.x))
     ) +
-    ggplot2::theme_bw(base_size = 10) +
-    ggplot2::theme(axis.text.y = ggplot2::element_text(size = 7))
+    ggplot2::coord_sf(expand = FALSE) +
+    ggplot2::labs(
+      title = "Supplementary Figure D. 都道府県別人口あたり ICT 算定回数（地図）",
+      subtitle = paste0(
+        fiscal_year,
+        " 年度（医療機関所在地）。色は log10 スケール（東京都の外れ値を抑えて地域差を可視化）"
+      ),
+      x = NULL,
+      y = NULL
+    ) +
+    ggplot2::theme_minimal(base_size = 10) +
+    ggplot2::theme(
+      legend.position = "right",
+      panel.grid = ggplot2::element_blank()
+    )
 }
