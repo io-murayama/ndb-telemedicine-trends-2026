@@ -7,7 +7,8 @@
 - **主アウトカム**: ICT 初診・再診・外来の利用割合（2022～2024）
 - **補足**: 2019～2021 年度の旧オンライン診療料（定義が異なるため Supplementary）
 
-詳細は [統計解析計画書（SAP）](docs/statistical-analysis-plan.md) を参照。
+詳細は [統計解析計画書（SAP）](docs/statistical-analysis-plan.md) を参照。  
+論文執筆（Intro・Discussion 分担）は [論文ストーリー・考察整理](docs/paper-outline-and-discussion-plan.md) を参照。
 
 ---
 
