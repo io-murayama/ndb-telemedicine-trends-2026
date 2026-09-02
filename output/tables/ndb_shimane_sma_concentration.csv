@@ -1,0 +1,4 @@
+﻿fiscal_year,izumo_online_primary_count,shimane_online_primary_count,izumo_share_of_shimane_observed_pct,izumo_standard_base_count,izumo_online_per_10000_standard_base,rest_of_shimane_online_primary_count,rest_of_shimane_standard_base_count,rest_of_shimane_online_per_10000_standard_base,izumo_to_rest_rate_ratio,izumo_expected_at_rest_rate,izumo_excess_over_rest_rate,izumo_missing_primary_components,rest_of_shimane_missing_primary_components
+2022,3581.0,6567.0,54.53022689203594,2189537.0,16.355055886244443,2986.0,5267610.0,5.668604927092173,2.8851994620542563,1241.1620226250616,2339.8379773749384,0,4
+2023,9002.0,9722.0,92.59411643694713,2271424.0,39.63152630244287,720.0,5471875.0,1.3158195316961736,30.119271942524943,298.87840639634493,8703.121593603655,0,4
+2024,8982.0,9781.0,91.83110111440548,2267199.0,39.61716638018983,799.0,5409422.0,1.4770524466384762,26.821773641384134,334.87718299663067,8647.12281700337,1,10

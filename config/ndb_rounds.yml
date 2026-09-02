@@ -37,8 +37,8 @@ rounds:
     japanese_era: "令和6年度"
     page_id: "00017"
     source_url: "https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/0000177221_00017.html"
-    zip_url: "https://www.mhlw.go.jp/content/12400000/001742573.zip"
-    zip_note: "第11回は個別 xlsx ではなく ZIP 配布。公費レセプトを含まない医科診療行為（算定回数）"
+    zip_url: "https://www.mhlw.go.jp/content/12400000/001742574.zip"
+    zip_note: "第11回は個別 xlsx ではなく ZIP 配布。第10回との比較のため、公費レセプトを含む医科診療行為（算定回数）を用いる"
 
 files:
   cross_initial_prefecture_sex_age:
