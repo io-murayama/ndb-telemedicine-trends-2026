@@ -1,0 +1,12 @@
+-r requirements.txt
+
+# Notebook and reproducible development
+jupyterlab>=4.3
+ipykernel>=6.29
+python-dotenv>=1.0
+
+# Quality checks and GitHub-related automation
+pytest>=8.3
+ruff>=0.9
+GitPython>=3.1
+PyGithub>=2.5

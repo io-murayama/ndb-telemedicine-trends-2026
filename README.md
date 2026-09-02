@@ -28,6 +28,52 @@ bash scripts/bootstrap.sh   # 依存パッケージ + 構成チェック
 
 R は 4.2 以降を想定。
 
+### Python環境（データ取得・補助分析・Jupyter）
+
+仮想環境はリポジトリ内の`.venv/`に作成済みです。初期化や再作成は次のコマンドで行えます。
+
+```bash
+bash scripts/bootstrap_python.sh
+```
+
+利用開始：
+
+```bash
+source .venv/bin/activate
+```
+
+以下を利用できます。
+
+- `pandas` / `numpy`：表形式データ・数値計算
+- `scipy` / `statsmodels` / `scikit-learn`：統計解析・モデル化
+- `matplotlib` / `seaborn`：可視化
+- `openpyxl` / `xlrd` / `pyarrow`：Excel・CSV・Parquet
+- `requests` / `beautifulsoup4` / `lxml`：公開データの取得・解析
+- `jupyterlab` / `ipykernel`：ノートブック
+- `pytest` / `ruff`：テスト・静的チェック
+- `GitPython` / `PyGithub`：Git・GitHub操作の自動化
+
+GitHub CLIも利用できます。認証はユーザー自身で次のコマンドを実行してください。
+
+```bash
+gh auth login
+```
+
+認証後は、通常のGit操作（`git pull`、`git switch`、`git add`、`git commit`、`git push`）や、`gh repo`・`gh issue`・`gh pr`などを利用できます。
+
+Jupyterカーネルを登録する場合：
+
+```bash
+python -m ipykernel install --sys-prefix --name public-health-analysis --display-name "Python (public-health-analysis)"
+```
+
+JupyterLabを起動する場合：
+
+```bash
+mkdir -p .jupyter/config .jupyter/data .jupyter/runtime .matplotlib .ipython
+JUPYTER_CONFIG_DIR=.jupyter/config JUPYTER_DATA_DIR=.jupyter/data JUPYTER_RUNTIME_DIR=.jupyter/runtime MPLCONFIGDIR=.matplotlib IPYTHONDIR=.ipython jupyter lab
+```
+
 ### 2. データの配置
 
 1. [NDB オープンデータ分析サイト](https://www.mhlw.go.jp/ndb/opendatasite/) から、対象年度の集計表をダウンロード
