@@ -167,11 +167,9 @@ knitr::kable(
 
 ---
 
-### 3.3a 年齢別の普及（Figure 4A / 4B）
+### 3.3a 年齢別の普及（Figure 4）
 
-![Figure 4A. 初診の年齢階級別変化（2022→2024）](../output/figures/figure4a_initial_change_by_age.png)
-
-![Figure 4B. 再診・外来の年齢階級別変化（2022→2024）](../output/figures/figure4b_followup_change_by_age.png)
+![Figure 4. 年齢階級別変化（2022→2024、初診・再診・外来）](../output/figures/figure4_change_by_age.png)
 
 ```{r change-table}
 change <- read_tab("change_2022_2024_by_age.csv")
@@ -186,8 +184,7 @@ knitr::kable(
 
 #### 解釈
 
-- **Figure 4A / 4B** は、年齢階級ごとの **絶対差** $p_{2024} - p_{2022}$（percentage points）を横棒で示し、「**誰に普及したか**」を比較する。
-- 初診・再診・外来は **Figure を分離** して示す。
+- **Figure 4** は、年齢階級ごとの **絶対差** $p_{2024} - p_{2022}$（percentage points）をロリポップチャートで示し、「**誰に普及したか**」を初診・再診・外来のパネルで比較する（色は Figure 2 と統一）。
 - **若年層（とくに 0～4 歳、20～30 代）で絶対差が大きい** 傾向。高齢層でも増加はあるが、水準・増分ともに小さい。
 
 ---
