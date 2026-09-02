@@ -24,15 +24,25 @@ order_prefectures_north_to_south <- function(df) {
 }
 
 merge_prefecture_geo <- function(geo, per_capita_df, fiscal_year = 2024) {
-  df <- per_capita_df[per_capita_df$fiscal_year == fiscal_year, , drop = FALSE]
+  merge_prefecture_geo_scoped(geo, per_capita_df, fiscal_year = fiscal_year)
+}
+
+merge_prefecture_geo_scoped <- function(geo, df, fiscal_year = NULL) {
+  if (!is.null(fiscal_year)) {
+    df <- df[df$fiscal_year == fiscal_year, , drop = FALSE]
+  }
+  if (!"visit_scope_label" %in% names(df)) {
+    df$visit_scope_label <- "合計"
+  }
+  df$visit_scope_label <- factor(
+    df$visit_scope_label,
+    levels = c("初診", "再診・外来", "合計")
+  )
   df$prefecture_code <- sprintf("%02d", as.integer(df$prefecture_code))
   merged <- merge(geo, df, by = "prefecture_code", all.x = TRUE)
-  merged[order(as.integer(merged$prefecture_code)), , drop = FALSE]
+  merged[order(as.integer(merged$prefecture_code), merged$visit_scope_label), , drop = FALSE]
 }
 
 merge_prefecture_geo_change <- function(geo, change_df) {
-  df <- change_df
-  df$prefecture_code <- sprintf("%02d", as.integer(df$prefecture_code))
-  merged <- merge(geo, df, by = "prefecture_code", all.x = TRUE)
-  merged[order(as.integer(merged$prefecture_code)), , drop = FALSE]
+  merge_prefecture_geo_scoped(geo, change_df, fiscal_year = NULL)
 }

@@ -372,38 +372,85 @@ plot_supplementary_prefecture_per_capita <- function(per_capita_df, fiscal_year 
     )
 }
 
+VISIT_SCOPE_PANEL_LEVELS <- c("初診", "再診・外来", "合計")
+VISIT_SCOPE_PANEL_COLORS <- c("初診" = "#1b9e77", "再診・外来" = "#d95f02", "合計" = "#7570b3")
+VISIT_SCOPE_FILL_LOW <- c("初診" = "#e8f5f0", "再診・外来" = "#fdeee0", "合計" = "#edeaf3")
+
+combine_prefecture_map_panels <- function(panels, title, subtitle) {
+  if (requireNamespace("patchwork", quietly = TRUE)) {
+    return(
+      patchwork::wrap_plots(panels, ncol = 3) +
+        patchwork::plot_annotation(
+          title = title,
+          subtitle = subtitle,
+          theme = ggplot2::theme(
+            plot.title = ggplot2::element_text(face = "bold", size = 11),
+            plot.subtitle = ggplot2::element_text(size = 9, color = "#444444")
+          )
+        )
+    )
+  }
+  panels[[1]]
+}
+
+theme_prefecture_map_panel <- function() {
+  ggplot2::theme_minimal(base_size = 9) +
+    ggplot2::theme(
+      axis.text = ggplot2::element_blank(),
+      axis.ticks = ggplot2::element_blank(),
+      panel.grid = ggplot2::element_blank(),
+      plot.title = ggplot2::element_text(face = "bold", hjust = 0.5, size = 10),
+      legend.position = "bottom",
+      legend.key.height = ggplot2::unit(0.35, "cm"),
+      legend.title = ggplot2::element_text(size = 8),
+      legend.text = ggplot2::element_text(size = 7)
+    )
+}
+
 plot_supplementary_prefecture_per_capita_map <- function(per_capita_df, fiscal_year = 2024, root = project_root()) {
   require_ggplot2()
   require_sf()
   geo <- load_prefecture_geo(root)
-  merged <- merge_prefecture_geo(geo, per_capita_df, fiscal_year = fiscal_year)
+  merged <- merge_prefecture_geo_scoped(geo, per_capita_df, fiscal_year = fiscal_year)
 
-  ggplot2::ggplot(merged) +
-    ggplot2::geom_sf(ggplot2::aes(fill = rate_per_population), color = "white", linewidth = 0.15) +
-    ggplot2::scale_fill_gradient(
-      low = "#eff3ff",
-      high = "#08519c",
-      trans = "log10",
-      name = "10万人あたり\n算定回数\n（log10）",
-      na.value = "grey85",
-      breaks = scales::trans_breaks("log10", function(x) 10^x),
-      labels = scales::trans_format("log10", scales::math_format(10^.x))
-    ) +
-    ggplot2::coord_sf(expand = FALSE) +
-    ggplot2::labs(
-      title = "Supplementary Figure D. 都道府県別人口あたり ICT 算定回数（地図）",
-      subtitle = paste0(
-        fiscal_year,
-        " 年度（医療機関所在地）。色は log10 スケール（東京都の外れ値を抑えて地域差を可視化）"
-      ),
-      x = NULL,
-      y = NULL
-    ) +
-    ggplot2::theme_minimal(base_size = 10) +
-    ggplot2::theme(
-      legend.position = "right",
-      panel.grid = ggplot2::element_blank()
+  panels <- lapply(VISIT_SCOPE_PANEL_LEVELS, function(scope_label) {
+    panel_df <- merged[merged$visit_scope_label == scope_label, , drop = FALSE]
+    use_log <- scope_label == "合計"
+    fill_scale <- if (use_log) {
+      ggplot2::scale_fill_gradient(
+        low = "#eff3ff",
+        high = "#08519c",
+        trans = "log10",
+        name = "10万人あたり\n（log10）",
+        na.value = "grey85",
+        breaks = scales::trans_breaks("log10", function(x) 10^x),
+        labels = scales::trans_format("log10", scales::math_format(10^.x))
+      )
+    } else {
+      ggplot2::scale_fill_gradient(
+        low = VISIT_SCOPE_FILL_LOW[[scope_label]],
+        high = VISIT_SCOPE_PANEL_COLORS[[scope_label]],
+        name = "10万人\nあたり",
+        na.value = "grey85"
+      )
+    }
+
+    ggplot2::ggplot(panel_df) +
+      ggplot2::geom_sf(ggplot2::aes(fill = rate_per_population), color = "white", linewidth = 0.12) +
+      fill_scale +
+      ggplot2::coord_sf(expand = FALSE) +
+      ggplot2::labs(title = scope_label, x = NULL, y = NULL) +
+      theme_prefecture_map_panel()
+  })
+
+  combine_prefecture_map_panels(
+    panels,
+    title = "Supplementary Figure D. 都道府県別人口あたり ICT 算定回数（地図）",
+    subtitle = paste0(
+      fiscal_year,
+      " 年度（医療機関所在地）。初診・再診・外来・合計の3パネル（合計のみ log10）"
     )
+  )
 }
 
 plot_supplementary_prefecture_per_capita_change <- function(change_df, baseline_year = 2022, end_year = 2024) {
@@ -462,33 +509,33 @@ plot_supplementary_prefecture_per_capita_change_map <- function(
   geo <- load_prefecture_geo(root)
   merged <- merge_prefecture_geo_change(geo, change_df)
 
-  ggplot2::ggplot(merged) +
-    ggplot2::geom_sf(ggplot2::aes(fill = relative_change_pct), color = "white", linewidth = 0.15) +
-    ggplot2::scale_fill_gradient2(
-      low = "#bdbdbd",
-      mid = "#f7fbff",
-      high = "#1b9e77",
-      midpoint = 0,
-      name = "変化率\n（%）",
-      na.value = "grey85",
-      limits = c(-50, 200),
-      oob = scales::squish
-    ) +
-    ggplot2::coord_sf(expand = FALSE) +
-    ggplot2::labs(
-      title = "Supplementary Figure F. 都道府県別人口あたり ICT 算定回数の変化率（地図）",
-      subtitle = paste0(
-        baseline_year,
-        "→",
-        end_year,
-        " 年度の相対変化率（%）。医療機関所在地。凡例は −50～200% でクリップ"
-      ),
-      x = NULL,
-      y = NULL
-    ) +
-    ggplot2::theme_minimal(base_size = 10) +
-    ggplot2::theme(
-      legend.position = "right",
-      panel.grid = ggplot2::element_blank()
+  panels <- lapply(VISIT_SCOPE_PANEL_LEVELS, function(scope_label) {
+    panel_df <- merged[merged$visit_scope_label == scope_label, , drop = FALSE]
+    ggplot2::ggplot(panel_df) +
+      ggplot2::geom_sf(ggplot2::aes(fill = relative_change_pct), color = "white", linewidth = 0.12) +
+      ggplot2::scale_fill_gradient2(
+        low = "#bdbdbd",
+        mid = "#f7fbff",
+        high = VISIT_SCOPE_PANEL_COLORS[[scope_label]],
+        midpoint = 0,
+        name = "変化率\n（%）",
+        na.value = "grey85",
+        limits = c(-50, 200),
+        oob = scales::squish
+      ) +
+      ggplot2::coord_sf(expand = FALSE) +
+      ggplot2::labs(title = scope_label, x = NULL, y = NULL) +
+      theme_prefecture_map_panel()
+  })
+
+  combine_prefecture_map_panels(
+    panels,
+    title = "Supplementary Figure F. 都道府県別人口あたり ICT 算定回数の変化率（地図）",
+    subtitle = paste0(
+      baseline_year,
+      "→",
+      end_year,
+      " 年度の相対変化率（%）。初診・再診・外来・合計の3パネル（凡例 −50～200% でクリップ）"
     )
+  )
 }
