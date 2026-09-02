@@ -71,6 +71,20 @@ save_figure(
   height = 12
 )
 
+fig_change_map <- plot_supplementary_prefecture_per_capita_change_map(
+  prefecture_change,
+  baseline_year = baseline_year,
+  end_year = fiscal_year,
+  root = PROJECT_ROOT
+)
+save_figure(
+  fig_change_map,
+  "supplementary_prefecture_per_capita_change_map_2022_2024.png",
+  root = PROJECT_ROOT,
+  width = 8,
+  height = 9
+)
+
 message(sprintf(
   "[06_prefecture_per_capita] prefectures=%s | years=%s | change=%s-%s",
   length(unique(per_capita$prefecture_code)),

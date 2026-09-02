@@ -29,3 +29,10 @@ merge_prefecture_geo <- function(geo, per_capita_df, fiscal_year = 2024) {
   merged <- merge(geo, df, by = "prefecture_code", all.x = TRUE)
   merged[order(as.integer(merged$prefecture_code)), , drop = FALSE]
 }
+
+merge_prefecture_geo_change <- function(geo, change_df) {
+  df <- change_df
+  df$prefecture_code <- sprintf("%02d", as.integer(df$prefecture_code))
+  merged <- merge(geo, df, by = "prefecture_code", all.x = TRUE)
+  merged[order(as.integer(merged$prefecture_code)), , drop = FALSE]
+}

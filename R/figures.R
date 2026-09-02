@@ -442,3 +442,45 @@ plot_supplementary_prefecture_per_capita_change <- function(change_df, baseline_
       axis.text.y = ggplot2::element_text(size = 7)
     )
 }
+
+plot_supplementary_prefecture_per_capita_change_map <- function(
+  change_df,
+  baseline_year = 2022,
+  end_year = 2024,
+  root = project_root()
+) {
+  require_ggplot2()
+  require_sf()
+  geo <- load_prefecture_geo(root)
+  merged <- merge_prefecture_geo_change(geo, change_df)
+
+  ggplot2::ggplot(merged) +
+    ggplot2::geom_sf(ggplot2::aes(fill = relative_change_pct), color = "white", linewidth = 0.15) +
+    ggplot2::scale_fill_gradient2(
+      low = "#bdbdbd",
+      mid = "#f7fbff",
+      high = "#1b9e77",
+      midpoint = 0,
+      name = "変化率\n（%）",
+      na.value = "grey85",
+      limits = c(-50, 200),
+      oob = scales::squish
+    ) +
+    ggplot2::coord_sf(expand = FALSE) +
+    ggplot2::labs(
+      title = "Supplementary Figure F. 都道府県別人口あたり ICT 算定回数の変化率（地図）",
+      subtitle = paste0(
+        baseline_year,
+        "→",
+        end_year,
+        " 年度の相対変化率（%）。医療機関所在地。凡例は −50～200% でクリップ"
+      ),
+      x = NULL,
+      y = NULL
+    ) +
+    ggplot2::theme_minimal(base_size = 10) +
+    ggplot2::theme(
+      legend.position = "right",
+      panel.grid = ggplot2::element_blank()
+    )
+}
