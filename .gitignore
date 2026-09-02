@@ -18,6 +18,8 @@ renv/staging/
 # data (regenerable; keep directory via .gitkeep)
 data/*
 !data/.gitkeep
+!data/reference/
+!data/reference/**
 !data/raw/
 data/raw/*
 !data/raw/.gitkeep

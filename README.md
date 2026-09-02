@@ -41,7 +41,7 @@ Rscript scripts/02_load_opendata.R
 Rscript scripts/03_build_tables.R
 Rscript scripts/04_figures.R
 Rscript scripts/05_model_binomial.R
-Rscript scripts/06_prefecture_standardized.R
+Rscript scripts/06_prefecture_per_capita.R
 bash scripts/render_report.sh              # HTML レポート生成
 ```
 
@@ -79,8 +79,8 @@ ndb-telemedicine-trends-2026/
 | トレンド | `output/tables/national_trend.csv` |
 | 主解析セル | `output/tables/main_analysis_cells.csv` |
 | モデル | `output/tables/model_fixed_effects.csv` |
-| 都道府県標準化 | `output/tables/prefecture_standardized.csv` |
-| Figure 1–3 | `output/figures/figure*.png` |
+| 都道府県（人口あたり） | `output/tables/prefecture_per_capita.csv` |
+| Figure 1–4 | `output/figures/figure*.png` |
 | Supplementary | `output/figures/supplementary_*.png` |
 | レポート | `output/reports/analysis_report.html` |
 

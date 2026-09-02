@@ -96,6 +96,66 @@ aggregate_main_cells <- function(df, codes_cfg) {
   rbind(build_cells("initial"), build_cells("followup"))
 }
 
+aggregate_cells_by_age <- function(cells) {
+  online <- aggregate(
+    online_count ~ fiscal_year + age_group + visit_type,
+    data = cells,
+    FUN = function(x) sum(x, na.rm = TRUE)
+  )
+  denom <- aggregate(
+    denominator_count ~ fiscal_year + age_group + visit_type,
+    data = cells,
+    FUN = function(x) sum(x, na.rm = TRUE)
+  )
+  merged <- merge(online, denom, by = c("fiscal_year", "age_group", "visit_type"), all = TRUE)
+  merged$proportion <- merged$online_count / merged$denominator_count
+  merged
+}
+
+aggregate_cells_by_sex <- function(cells) {
+  online <- aggregate(
+    online_count ~ fiscal_year + sex + visit_type,
+    data = cells,
+    FUN = function(x) sum(x, na.rm = TRUE)
+  )
+  denom <- aggregate(
+    denominator_count ~ fiscal_year + sex + visit_type,
+    data = cells,
+    FUN = function(x) sum(x, na.rm = TRUE)
+  )
+  merged <- merge(online, denom, by = c("fiscal_year", "sex", "visit_type"), all = TRUE)
+  merged$proportion <- merged$online_count / merged$denominator_count
+  merged
+}
+
+aggregate_change_2022_2024 <- function(cells, baseline_year = 2022, end_year = 2024) {
+  age_cells <- aggregate_cells_by_age(cells)
+  wide <- reshape(
+    age_cells,
+    idvar = c("age_group", "visit_type"),
+    timevar = "fiscal_year",
+    direction = "wide"
+  )
+
+  prop_base <- paste0("proportion.", baseline_year)
+  prop_end <- paste0("proportion.", end_year)
+  if (!all(c(prop_base, prop_end) %in% names(wide))) {
+    stop("Missing fiscal years for change calculation: ", baseline_year, ", ", end_year, call. = FALSE)
+  }
+
+  wide$proportion_baseline <- wide[[prop_base]]
+  wide$proportion_end <- wide[[prop_end]]
+  wide$abs_change_pp <- (wide$proportion_end - wide$proportion_baseline) * 100
+  wide$relative_change_pct <- ifelse(
+    is.na(wide$proportion_baseline) | wide$proportion_baseline <= 0,
+    NA_real_,
+    (wide$proportion_end / wide$proportion_baseline - 1) * 100
+  )
+  wide$baseline_year <- baseline_year
+  wide$end_year <- end_year
+  wide
+}
+
 save_analysis_table <- function(df, filename, root = project_root()) {
   out_dir <- path_from_root("output", "tables", root = root)
   if (!dir.exists(out_dir)) {

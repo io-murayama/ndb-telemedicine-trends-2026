@@ -68,7 +68,7 @@ fmt_n <- function(x) format(x, big.mark = ",", scientific = FALSE)
   - **初診**: ICT 初診算定回数 / 全初診算定回数
   - **再診**: ICT 再診・外来算定回数 / 全再診・外来算定回数
 - **主解析（2022～2024）**: 集計セルを単位とした **binomial regression**（log link → risk ratio）
-- **副次解析**: 都道府県別 **直接標準化**（全国年齢×性別構成を基準）
+- **副次解析**: 都道府県別 **人口あたり ICT 算定回数**（10万人あたり、総務省人口推計を分母）
 
 ---
 
@@ -154,15 +154,39 @@ knitr::kable(
 
 ---
 
-### 3.3 年齢・性別別（Figure 3）
+### 3.3 年齢別・性別別（Figure 3A / 3B）
 
-![Figure 3. 年齢・性別別オンライン診療割合](../output/figures/figure3_age_sex.png)
+![Figure 3A. 年齢階級別（性別集計）](../output/figures/figure3a_age_stratified.png)
+
+![Figure 3B. 性別（年齢集計）](../output/figures/figure3b_sex_stratified.png)
 
 #### 解釈
 
-- 性別ごとに **年齢パターンはおおむね同型**（若年で高く、高齢で低い）。
-- 若年層では **女性の方が割合がやや高い** 年齢帯も見られるが、差は大きくはない。詳細な男女差は次節のモデルで評価。
-- 2022 → 2024 にかけて **男女・全年齢帯で上昇傾向** が確認できる。
+- **年齢別（Figure 3A）**: 性別を合算すると、若年層で割合が高く高齢ほど低下するパターンが明確。Figure 2 と同型だが、男女を統合した全体傾向を示す。
+- **性別別（Figure 3B）**: 全年齢を合算すると、**女性の方が男性より ICT 利用割合がやや高い** 傾向（とくに初診）。差の大きさはモデル結果（表3）で確認。
+
+---
+
+### 3.3a 年齢・初診／再診別の増加率（Figure 4）
+
+![Figure 4. 年齢階級別増加率（2022→2024）](../output/figures/figure4_change_by_age_visit.png)
+
+```{r change-table}
+change <- read_tab("change_2022_2024_by_age.csv")
+change$相対増加率 <- sprintf("%.1f%%", change$relative_change_pct)
+change$絶対差 <- sprintf("%.3f pp", change$abs_change_pp)
+change$種別 <- ifelse(change$visit_type == "initial", "初診", "再診・外来")
+knitr::kable(
+  change[order(change$age_group), c("age_group", "種別", "相対増加率", "絶対差")],
+  col.names = c("年齢階級", "種別", "相対増加率（2022→2024）", "絶対差（pp）"),
+  caption = "表2a. 年齢階級・初診／再診別の増加（2022→2024）"
+)
+```
+
+#### 解釈
+
+- **全年齢帯で増加**。相対増加率は初診・再診ともに高いが、**若年層（とくに 0～4 歳、20～30 代）で増加率が大きい** 傾向。
+- 初診と再診・外来で **増加パターンの形は類似** するが、水準（絶対割合）は初診の方が高い（Figure 2 参照）。
 
 ---
 
@@ -210,33 +234,32 @@ SAP の方針どおり、**p 値より effect size（RR・percentage-point diffe
 
 ---
 
-### 3.5 副次解析：都道府県別標準化（Supplementary Figure）
+### 3.5 副次解析：都道府県別人口あたり（Supplementary Figure C）
 
 ```{r pref-table}
-pref <- read_tab("prefecture_standardized.csv")
+pref <- read_tab("prefecture_per_capita.csv")
 pref2024 <- pref[pref$fiscal_year == 2024, ]
-pref2024 <- pref2024[order(-pref2024$standardized_proportion_pct), ]
-pref2024$割合 <- sprintf("%.3f%%", pref2024$standardized_proportion_pct)
+pref2024 <- pref2024[order(-pref2024$rate_per_population), ]
+pref2024$率 <- sprintf("%.1f", pref2024$rate_per_population)
 knitr::kable(
   rbind(
-    head(pref2024[, c("prefecture_name", "割合")], 5),
-    tail(pref2024[, c("prefecture_name", "割合")], 5)
+    head(pref2024[, c("prefecture_name", "率")], 5),
+    tail(pref2024[, c("prefecture_name", "率")], 5)
   ),
-  col.names = c("都道府県", "標準化割合（2024）"),
-  caption = "表5. 都道府県別標準化割合（上位・下位5県、2024）"
+  col.names = c("都道府県", "10万人あたり算定回数（2024）"),
+  caption = "表5. 都道府県別人口あたり ICT 算定回数（上位・下位5県、2024）"
 )
 ```
 
-![Supplementary Figure C. 都道府県別標準化割合（2024）](../output/figures/supplementary_prefecture_2024.png)
+![Supplementary Figure C. 都道府県別人口あたり（2024）](../output/figures/supplementary_prefecture_per_capita_2024.png)
 
-![Supplementary Figure C. 都道府県別標準化割合（2022–2024 平均）](../output/figures/supplementary_prefecture_pooled.png)
+![Supplementary Figure C. 都道府県別人口あたり（2022–2024 平均）](../output/figures/supplementary_prefecture_per_capita_pooled.png)
 
 #### 解釈
 
-- **医療機関所在地** に基づく都道府県別の **直接標準化割合**（2022～2024 年、ICT 時代）。
-- **2024 年度**: **東京都（0.57%）** が最も高く、次いで **島根県（0.14%）**、**愛知県（0.11%）** など。下位は **香川県（0.004%）** など。
-- 都道府県間で **約 100 倍以上の差** があり、地域 variation が大きい。ただし **患者居住地ではなく医療機関所在地** であるため、患者側のアクセス格差として直接解釈はできない（SAP 6）。
-- 東京の高さは、都市部の医療機関・受診行動の集積、ICT 導入の早さ等が関与している可能性がある。人口稀少県で相対的に高い例（島根）もあり、単純な都市/地方二分では説明しきれない。
+- **医療機関所在地** に基づく都道府県別の **人口あたり ICT 算定回数**（10万人あたり）。
+- 分母は **総務省統計局人口推計**（都道府県別総人口）。`data/reference/prefecture_population.csv` を参照。
+- 年齢・性別標準化と異なり、**地域の人口規模を考慮した利用率** として解釈できる。ただし医療機関所在地と患者居住地は一致しない場合がある（SAP 6）。
 
 ---
 
@@ -260,7 +283,7 @@ knitr::kable(
 ### 解析パイプライン
 
 ```text
-02_load_opendata → 03_build_tables → 04_figures → 05_model_binomial → 06_prefecture_standardized
+02_load_opendata → 03_build_tables → 04_figures → 05_model_binomial → 06_prefecture_per_capita
 ```
 
 ### 出力ファイル一覧
@@ -270,8 +293,9 @@ knitr::kable(
 | トレンド | `output/tables/national_trend.csv` |
 | 主解析セル | `output/tables/main_analysis_cells.csv` |
 | モデル | `output/tables/model_fixed_effects.csv` |
-| 都道府県 | `output/tables/prefecture_standardized.csv` |
-| Figure 1–3 | `output/figures/figure*.png` |
+| 増加率 | `output/tables/change_2022_2024_by_age.csv` |
+| 都道府県（人口あたり） | `output/tables/prefecture_per_capita.csv` |
+| Figure 1–4 | `output/figures/figure*.png` |
 | Supp Fig A–C | `output/figures/supplementary_*.png` |
 
 ---
