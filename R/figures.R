@@ -203,7 +203,7 @@ plot_supplementary_policy_timeline <- function() {
 
 plot_figure2_age_by_visit <- function(cells, codes_cfg) {
   require_ggplot2()
-  df <- prepare_cells_plot_data(cells, codes_cfg)
+  df <- prepare_age_plot_data(cells, codes_cfg)
 
   ggplot2::ggplot(
     df,
