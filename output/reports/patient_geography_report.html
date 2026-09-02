@@ -11,9 +11,24 @@
 </tbody></table>
 <p>e-Stat表15の全国値は2022年1.8%、2023年2.5%、2024年2.5%だった。これは今回ダウンロードした公式CSVを直接読んだ値である。</p>
 <h2>結果</h2>
-<p><img src="../figures/figure4_patient_prefecture_heatmap.png" alt="都道府県・年次別患者側利用率"></p>
+<p><img src="../figures/figure4_patient_prefecture_map.png" alt="居住都道府県別・年次別の自己申告利用率（地図）"></p>
 <p>都道府県順位の年次間Spearman相関の平均は、患者側で <strong>0.34</strong>、供給側NDBで <strong>0.77</strong> だった。患者側の県別順位には偶然変動が大きいため、以下の乖離は仮説生成として扱う。</p>
-<p><img src="../figures/figure5_patient_region_heatmap.png" alt="地方別患者側利用率"></p>
+<h3>居住都道府県別の2022→2024年変化</h3>
+<p><img src="../figures/figure18_patient_location_change_map.png" alt="居住都道府県別の自己申告利用率の変化（地図）"></p>
+<p>利用率が1.5ポイント以上上昇した県は 9 県だった。ただし、公表標本数×公表率による利用者数目安が2022年・2024年とも10人以上なのは 1 県のみである。したがって、地図は増加候補を探すための記述であり、各県での真の増加の検定結果ではない。</p>
+<table><thead><tr><th>居住都道府県</th><th>2022年</th><th>2024年</th><th>変化</th><th>利用者数目安 2022</th><th>利用者数目安 2024</th><th>両端10人以上</th></tr></thead><tbody>
+<tr><td>宮城県</td><td>0.1%</td><td>3.0%</td><td>+2.9ポイント</td><td>0.7</td><td>19.9</td><td>いいえ</td></tr>
+<tr><td>兵庫県</td><td>1.3%</td><td>3.8%</td><td>+2.5ポイント</td><td>6.2</td><td>23.5</td><td>いいえ</td></tr>
+<tr><td>北海道</td><td>1.4%</td><td>3.4%</td><td>+2.0ポイント</td><td>9.1</td><td>15.9</td><td>いいえ</td></tr>
+<tr><td>滋賀県</td><td>0.9%</td><td>2.9%</td><td>+2.0ポイント</td><td>6.2</td><td>22.2</td><td>いいえ</td></tr>
+<tr><td>和歌山県</td><td>1.3%</td><td>3.3%</td><td>+2.0ポイント</td><td>8.0</td><td>16.7</td><td>いいえ</td></tr>
+<tr><td>神奈川県</td><td>2.0%</td><td>3.9%</td><td>+1.9ポイント</td><td>13.1</td><td>26.1</td><td>はい</td></tr>
+<tr><td>鳥取県</td><td>0.4%</td><td>2.1%</td><td>+1.7ポイント</td><td>2.5</td><td>12.5</td><td>いいえ</td></tr>
+<tr><td>沖縄県</td><td>1.9%</td><td>3.6%</td><td>+1.7ポイント</td><td>7.4</td><td>12.1</td><td>いいえ</td></tr>
+<tr><td>長野県</td><td>0.4%</td><td>2.0%</td><td>+1.6ポイント</td><td>3.1</td><td>13.7</td><td>いいえ</td></tr>
+</tbody></table>
+<p>この表・図の地域は回答者の居住都道府県である。保険診療と自由診療を分けない自己申告であり、NDBの患者住所地集計の代替ではない。</p>
+<p><img src="../figures/figure5_patient_region_trend.png" alt="地方別患者側利用率の推移"></p>
 <h3>地方別（3年平均）</h3>
 <table><thead><tr><th>地方</th><th>利用率3年平均</th><th>利用率2024年</th></tr></thead><tbody>
 <tr><td>南関東</td><td>3.4%</td><td>3.5%</td></tr>
@@ -31,6 +46,7 @@
 <p><img src="../figures/figure6_patient_supply_scatter.png" alt="患者側と供給側の年別比較"></p>
 <p>患者側利用率と地域のインターネット利用率の年平均Spearman相関は <strong>0.46</strong> であり、接続率だけで患者側の条件付き利用を説明できるわけではない。</p>
 <p><img src="../figures/figure7_patient_supply_quadrant.png" alt="患者側と供給側の4象限"></p>
+<p><img src="../figures/figure20_patient_provider_rank_maps.png" alt="患者居住地と医療機関所在地でみた地域分布の比較（地図）"></p>
 <h3>乖離が大きい県（3年平均の順位差）</h3>
 <table><thead><tr><th>都道府県</th><th>患者側利用率3年平均</th><th>供給側NDB割合3年平均</th><th>供給順位－患者順位</th><th>患者側年次幅</th><th>低精度目安年数</th><th>探索的類型</th></tr></thead><tbody>
 <tr><td>島根県</td><td>1.3%</td><td>0.125%</td><td>+26.3</td><td>1.4%</td><td>2</td><td>患者側低い・供給側高</td></tr>

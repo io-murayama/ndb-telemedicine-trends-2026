@@ -1,0 +1,10 @@
+﻿year,facility_code,facility_name,municipality_name,online_initial_patient_days,online_repeat_patient_days,online_observed_patient_days,any_online_component_suppressed
+2022,3232030011,出雲市民病院,出雲市,0.0,0.0,0.0,False
+2023,3232030011,出雲市民病院,出雲市,0.0,,0.0,True
+2024,3232030011,出雲市民病院,出雲市,0.0,9.0,9.0,False
+2022,3232030014,出雲徳洲会病院,出雲市,0.0,0.0,0.0,False
+2023,3232030014,出雲徳洲会病院,出雲市,0.0,76.0,76.0,False
+2024,3232030014,出雲徳洲会病院,出雲市,1.0,232.0,233.0,False
+2022,3232030021,吉野産婦人科医院,出雲市,0.0,0.0,0.0,False
+2023,3232030021,吉野産婦人科医院,出雲市,0.0,0.0,0.0,False
+2024,3232030021,吉野産婦人科医院,出雲市,2.0,2.0,4.0,False

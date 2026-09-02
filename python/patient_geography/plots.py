@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import geopandas as gpd
 import matplotlib
 
 # The analysis runs non-interactively; forcing Agg avoids macOS GUI backends.
@@ -13,9 +14,14 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 from matplotlib import font_manager
+from matplotlib.colors import Normalize, TwoSlopeNorm
 from scipy.stats import spearmanr
 
 JAPANESE_FONTS = ["Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", "Noto Sans CJK JP", "IPAexGothic"]
+ROOT = Path(__file__).resolve().parents[2]
+PREFECTURE_GEOJSON = ROOT / "data" / "reference" / "prefectures.geojson"
+JAPAN_XLIM = (122.5, 154.5)
+JAPAN_YLIM = (20.0, 46.0)
 
 
 def setup_style() -> None:
@@ -35,61 +41,186 @@ def setup_style() -> None:
 
 
 def _save(fig: plt.Figure, path: Path) -> None:
-    fig.tight_layout()
+    if not fig.get_constrained_layout():
+        fig.tight_layout()
     fig.savefig(path, bbox_inches="tight")
     plt.close(fig)
 
 
-def plot_prefecture_heatmap(patient: pd.DataFrame, output: Path) -> None:
-    mean_rate = patient.groupby("prefecture_code")["patient_online_rate_pct"].mean().sort_values()
-    order = mean_rate.index.tolist()
-    names = patient.drop_duplicates("prefecture_code").set_index("prefecture_code")["prefecture_name"]
-    matrix = patient.pivot(index="prefecture_code", columns="year", values="patient_online_rate_pct").loc[order]
-    event_proxy = patient.pivot(index="prefecture_code", columns="year", values="estimated_events_proxy").loc[order]
-    annotations = matrix.copy().astype(str)
-    for row in matrix.index:
-        for year in matrix.columns:
-            dagger = "†" if event_proxy.loc[row, year] < 10 else ""
-            annotations.loc[row, year] = f"{matrix.loc[row, year]:.1f}{dagger}"
+def _prefecture_geometry(values: pd.DataFrame) -> gpd.GeoDataFrame:
+    """Join a prefecture-level table to the repository's fixed boundary file."""
+    geo = gpd.read_file(PREFECTURE_GEOJSON)
+    geo["prefecture_code"] = geo["id"].astype(int)
+    values = values.copy()
+    values["prefecture_code"] = values["prefecture_code"].astype(int)
+    return geo.merge(values, on="prefecture_code", how="left", validate="one_to_one")
 
-    fig, axis = plt.subplots(figsize=(7.2, 14.5))
-    sns.heatmap(
-        matrix,
-        cmap="YlOrRd",
-        linewidths=0.4,
-        linecolor="white",
-        annot=annotations,
-        fmt="",
-        cbar_kws={"label": "オンライン診療利用率（インターネット利用者中、%）"},
+
+def _draw_prefecture_map(
+    frame: gpd.GeoDataFrame,
+    column: str,
+    axis: plt.Axes,
+    *,
+    cmap: str,
+    norm: Normalize,
+) -> None:
+    frame.plot(
+        column=column,
         ax=axis,
+        cmap=cmap,
+        norm=norm,
+        linewidth=0.35,
+        edgecolor="white",
+        missing_kwds={"color": "#e5e7eb"},
     )
-    axis.set_yticklabels([names[code] for code in matrix.index], rotation=0, fontsize=9)
-    axis.set_xticklabels([f"{year}年" for year in matrix.columns], rotation=0)
-    axis.set_xlabel("")
-    axis.set_ylabel("")
-    axis.set_title("図4　患者側の自己申告オンライン診療利用率：都道府県・年次別")
-    fig.text(0.01, 0.002, "† 推定利用者数の目安（公表標本数×公表率）が10人未満のセル。複雑標本のため信頼区間は算出していない。", fontsize=8)
-    _save(fig, output)
+    axis.set_xlim(*JAPAN_XLIM)
+    axis.set_ylim(*JAPAN_YLIM)
+    axis.set_axis_off()
 
 
-def plot_region_heatmap(region: pd.DataFrame, output: Path) -> None:
-    matrix = region.pivot(index="region", columns="year", values="patient_online_rate_pct")
-    fig, axis = plt.subplots(figsize=(7.2, 6.4))
-    sns.heatmap(
-        matrix,
-        cmap="YlGnBu",
-        linewidths=0.6,
-        linecolor="white",
-        annot=True,
-        fmt=".1f",
-        cbar_kws={"label": "オンライン診療利用率（インターネット利用者中、%）"},
-        ax=axis,
+def _annotate_extremes(
+    frame: gpd.GeoDataFrame,
+    column: str,
+    axis: plt.Axes,
+    *,
+    n: int = 2,
+    high: bool = True,
+    suffix: str = "%",
+) -> None:
+    part = frame.dropna(subset=[column]).nlargest(n, column) if high else frame.dropna(subset=[column]).nsmallest(n, column)
+    points = part.geometry.representative_point()
+    for (_, row), point in zip(part.iterrows(), points):
+        axis.annotate(
+            f"{row['prefecture_name']}\n{row[column]:.1f}{suffix}",
+            (point.x, point.y),
+            ha="center",
+            va="center",
+            fontsize=6.5,
+            fontweight="bold",
+            bbox={"boxstyle": "round,pad=0.15", "fc": "white", "ec": "none", "alpha": 0.72},
+        )
+
+
+def plot_prefecture_year_maps(
+    patient: pd.DataFrame,
+    output: Path,
+    title: str = "図4　患者居住地別・自己申告オンライン診療利用率（地図）",
+) -> None:
+    """Map self-reported residence-prefecture rates for all three survey years."""
+    vmax = float(patient["patient_online_rate_pct"].max())
+    norm = Normalize(vmin=0, vmax=vmax)
+    figure, axes = plt.subplots(1, 3, figsize=(16.5, 7.2), layout="constrained")
+    for axis, year in zip(axes, sorted(patient["year"].unique())):
+        values = patient.loc[patient["year"] == year, ["prefecture_code", "prefecture_name", "patient_online_rate_pct"]]
+        frame = _prefecture_geometry(values)
+        _draw_prefecture_map(frame, "patient_online_rate_pct", axis, cmap="YlOrRd", norm=norm)
+        _annotate_extremes(frame, "patient_online_rate_pct", axis)
+        axis.set_title(f"{year}年", fontweight="bold")
+    colorbar = figure.colorbar(
+        plt.cm.ScalarMappable(norm=norm, cmap="YlOrRd"),
+        ax=axes,
+        shrink=0.65,
+        pad=0.02,
     )
-    axis.set_xticklabels([f"{year}年" for year in matrix.columns], rotation=0)
-    axis.set_xlabel("")
-    axis.set_ylabel("")
-    axis.set_title("図5　患者側の自己申告オンライン診療利用率：地方別")
-    _save(fig, output)
+    colorbar.set_label("自己申告のオンライン診療利用率（インターネット利用者中、%）")
+    figure.suptitle(title, fontweight="bold")
+    figure.text(
+        0.5,
+        0.02,
+        "回答者の居住都道府県。保険／自由診療を区別しない自己申告であり、NDB患者住所地集計ではない。",
+        ha="center",
+        fontsize=8,
+    )
+    _save(figure, output)
+
+
+def plot_prefecture_change_map(
+    patient: pd.DataFrame,
+    output: Path,
+    title: str = "図18　患者居住地別・自己申告オンライン診療利用率の変化（地図）",
+) -> None:
+    """Map the 2022–2024 change; it remains an exploratory precision-limited view."""
+    rates = patient.pivot(index=["prefecture_code", "prefecture_name"], columns="year", values="patient_online_rate_pct")
+    change = (rates[2024] - rates[2022]).rename("change_pct_points").reset_index()
+    max_abs = float(change["change_pct_points"].abs().max())
+    norm = TwoSlopeNorm(vmin=-max_abs, vcenter=0, vmax=max_abs)
+    frame = _prefecture_geometry(change)
+    figure, axis = plt.subplots(figsize=(7.8, 8.8), layout="constrained")
+    _draw_prefecture_map(frame, "change_pct_points", axis, cmap="RdBu_r", norm=norm)
+    _annotate_extremes(frame, "change_pct_points", axis, high=True, suffix="pt")
+    _annotate_extremes(frame, "change_pct_points", axis, high=False, suffix="pt")
+    colorbar = figure.colorbar(plt.cm.ScalarMappable(norm=norm, cmap="RdBu_r"), ax=axis, shrink=0.72, pad=0.02)
+    colorbar.set_label("利用率の変化（2022年→2024年、ポイント）")
+    axis.set_title(title, fontweight="bold")
+    figure.text(
+        0.5,
+        0.02,
+        "都道府県別の見かけの変化。小さい公表標本セルが多いため、差の検定結果ではない。",
+        ha="center",
+        fontsize=8,
+    )
+    _save(figure, output)
+
+
+def plot_patient_supply_rank_maps(
+    pooled: pd.DataFrame,
+    output: Path,
+    title: str = "図20　患者居住地と医療機関所在地でみた地域分布の比較（地図）",
+) -> None:
+    """Compare patient and provider geography on a common within-prefecture rank scale."""
+    values = pooled[
+        [
+            "prefecture_code",
+            "prefecture_name",
+            "patient_mean_rank",
+            "supply_mean_rank",
+            "rank_gap_mean",
+        ]
+    ].copy()
+    frame = _prefecture_geometry(values)
+    rank_norm = Normalize(vmin=1, vmax=len(values))
+    gap = float(frame["rank_gap_mean"].abs().max())
+    gap_norm = TwoSlopeNorm(vmin=-gap, vcenter=0, vmax=gap)
+    figure, axes = plt.subplots(1, 3, figsize=(17.2, 7.2), layout="constrained")
+
+    panels = [
+        ("patient_mean_rank", "患者側：自己申告利用率の順位", "YlOrRd", rank_norm),
+        ("supply_mean_rank", "供給側：NDB算定割合の順位", "YlOrRd", rank_norm),
+        ("rank_gap_mean", "供給順位 − 患者順位", "RdBu_r", gap_norm),
+    ]
+    for axis, (column, panel_title, cmap, norm) in zip(axes, panels):
+        _draw_prefecture_map(frame, column, axis, cmap=cmap, norm=norm)
+        axis.set_title(panel_title, fontweight="bold")
+    _annotate_extremes(frame, "patient_mean_rank", axes[0], suffix="位")
+    _annotate_extremes(frame, "supply_mean_rank", axes[1], suffix="位")
+    _annotate_extremes(frame, "rank_gap_mean", axes[2], suffix="位")
+    _annotate_extremes(frame, "rank_gap_mean", axes[2], high=False, suffix="位")
+    rank_colorbar = figure.colorbar(plt.cm.ScalarMappable(norm=rank_norm, cmap="YlOrRd"), ax=axes[:2], shrink=0.63, pad=0.02)
+    rank_colorbar.set_label("都道府県内順位（1=低い、47=高い）")
+    gap_colorbar = figure.colorbar(plt.cm.ScalarMappable(norm=gap_norm, cmap="RdBu_r"), ax=axes[2], shrink=0.63, pad=0.02)
+    gap_colorbar.set_label("順位差（正=供給側が相対的に高い）")
+    figure.suptitle(title, fontweight="bold")
+    figure.text(
+        0.5,
+        0.02,
+        "2022〜2024年平均。絶対値ではなく各指標内の都道府県順位を比較。患者側は保険／自由診療を区別しない。",
+        ha="center",
+        fontsize=8,
+    )
+    _save(figure, output)
+
+
+def plot_region_trend(region: pd.DataFrame, output: Path) -> None:
+    """Use a line chart for regions instead of a tabular color matrix."""
+    figure, axis = plt.subplots(figsize=(9.6, 6.2))
+    for name, part in region.groupby("region", observed=True):
+        axis.plot(part["year"], part["patient_online_rate_pct"], marker="o", linewidth=1.6, label=name)
+    axis.set_xticks(sorted(region["year"].unique()))
+    axis.set_ylabel("自己申告のオンライン診療利用率（%）")
+    axis.set_xlabel("調査年")
+    axis.set_title("図5　患者側の自己申告オンライン診療利用率：地方別推移")
+    axis.legend(ncol=2, fontsize=8, frameon=False)
+    _save(figure, output)
 
 
 def plot_yearly_supply_scatter(comparison: pd.DataFrame, output: Path) -> None:

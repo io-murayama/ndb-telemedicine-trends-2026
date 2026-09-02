@@ -15,6 +15,7 @@ import pandas as pd
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "python"))
 
+from patient_geography.analysis import build_patient_location_change
 from patient_geography.io import (
     load_ndb_supply,
     load_survey,
@@ -23,9 +24,11 @@ from patient_geography.io import (
 )
 from patient_geography.plots import (
     plot_internet_access_scatter,
-    plot_prefecture_heatmap,
+    plot_patient_supply_rank_maps,
+    plot_prefecture_change_map,
+    plot_prefecture_year_maps,
     plot_quadrant,
-    plot_region_heatmap,
+    plot_region_trend,
     plot_yearly_supply_scatter,
     setup_style,
 )
@@ -93,6 +96,7 @@ def main() -> int:
     supply = load_ndb_supply(ROOT)
     comparison = build_comparison(patient, supply)
     pooled = build_pooled_summary(comparison)
+    patient_location_change = build_patient_location_change(patient)
 
     correlations = pd.concat(
         [
@@ -116,14 +120,19 @@ def main() -> int:
     pooled.to_csv(table_dir / "patient_supply_pooled_summary.csv", index=False, encoding="utf-8-sig")
     correlations.to_csv(table_dir / "patient_geography_associations.csv", index=False, encoding="utf-8-sig")
     stability.to_csv(table_dir / "patient_geography_rank_stability.csv", index=False, encoding="utf-8-sig")
+    patient_location_change.to_csv(
+        table_dir / "patient_location_change_2022_2024.csv", index=False, encoding="utf-8-sig"
+    )
 
     setup_style()
-    plot_prefecture_heatmap(patient, figure_dir / "figure4_patient_prefecture_heatmap.png")
-    plot_region_heatmap(region, figure_dir / "figure5_patient_region_heatmap.png")
+    plot_prefecture_year_maps(patient, figure_dir / "figure4_patient_prefecture_map.png")
+    plot_prefecture_change_map(patient, figure_dir / "figure18_patient_location_change_map.png")
+    plot_region_trend(region, figure_dir / "figure5_patient_region_trend.png")
     plot_yearly_supply_scatter(comparison, figure_dir / "figure6_patient_supply_scatter.png")
     plot_quadrant(pooled, figure_dir / "figure7_patient_supply_quadrant.png")
     plot_internet_access_scatter(patient, figure_dir / "figure8_patient_internet_access.png")
-    write_report(report_dir, national, region, correlations, stability, pooled, comparison)
+    plot_patient_supply_rank_maps(pooled, figure_dir / "figure20_patient_provider_rank_maps.png")
+    write_report(report_dir, national, region, correlations, stability, pooled, comparison, patient_location_change)
 
     print(f"patient rows={patient.shape[0]}, comparison rows={comparison.shape[0]}")
     print(f"tables: {table_dir}")

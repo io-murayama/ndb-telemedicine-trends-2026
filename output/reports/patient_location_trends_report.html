@@ -1,0 +1,28 @@
+<html><head><meta charset='utf-8'><title>患者居住地別トレンド</title><style>body{max-width:1050px;margin:32px auto;font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans',sans-serif;line-height:1.65}img{max-width:100%;height:auto}table{border-collapse:collapse;margin:1em 0}th,td{border:1px solid #ccc;padding:5px 8px}</style></head><body><h1>患者居住地別のオンライン診療利用：2022–2024年地図</h1>
+<h2>この図が示すもの・示さないもの</h2>
+<p>この分析は、総務省「通信利用動向調査」の回答者の<strong>居住都道府県</strong>別・自己申告による「過去1年間のオンライン診療利用率」を可視化したものである。居住地の患者側地域像を補助的に示すが、NDBの患者住所地集計ではない。また、保険診療と自由診療を区別しないため、NDB保険診療の需要量や都道府県別の需給比を測るものではない。</p>
+<h2>結果</h2>
+<p><img src="../figures/figure18_patient_location_rate_map.png" alt="居住都道府県別・年次利用率"></p>
+<p><img src="../figures/figure19_patient_location_change_map.png" alt="居住都道府県別・変化"></p>
+<table><thead><tr><th>年</th><th>47都道府県の単純平均</th><th>都道府県数</th></tr></thead><tbody>
+<tr><td>2022</td><td>1.3%</td><td>47</td></tr>
+<tr><td>2023</td><td>1.7%</td><td>47</td></tr>
+<tr><td>2024</td><td>2.0%</td><td>47</td></tr>
+</tbody></table>
+<p>2022年から2024年に1.5ポイント以上上昇したのは 9 県である。ただし、2022年と2024年の両端で、公表標本数×公表率による利用者数目安が10人以上なのは 1 県のみだった。以下の『増加』は、仮説生成のための記述であり、複雑標本設計を反映した差の検定ではない。</p>
+<table><thead><tr><th>居住都道府県</th><th>2022年</th><th>2024年</th><th>変化</th><th>利用者数目安 2022</th><th>利用者数目安 2024</th><th>両端10人以上</th></tr></thead><tbody>
+<tr><td>宮城県</td><td>0.1%</td><td>3.0%</td><td>+2.9ポイント</td><td>0.7</td><td>19.9</td><td>いいえ</td></tr>
+<tr><td>兵庫県</td><td>1.3%</td><td>3.8%</td><td>+2.5ポイント</td><td>6.2</td><td>23.5</td><td>いいえ</td></tr>
+<tr><td>北海道</td><td>1.4%</td><td>3.4%</td><td>+2.0ポイント</td><td>9.1</td><td>15.9</td><td>いいえ</td></tr>
+<tr><td>滋賀県</td><td>0.9%</td><td>2.9%</td><td>+2.0ポイント</td><td>6.2</td><td>22.2</td><td>いいえ</td></tr>
+<tr><td>和歌山県</td><td>1.3%</td><td>3.3%</td><td>+2.0ポイント</td><td>8.0</td><td>16.7</td><td>いいえ</td></tr>
+<tr><td>神奈川県</td><td>2.0%</td><td>3.9%</td><td>+1.9ポイント</td><td>13.1</td><td>26.1</td><td>はい</td></tr>
+<tr><td>鳥取県</td><td>0.4%</td><td>2.1%</td><td>+1.7ポイント</td><td>2.5</td><td>12.5</td><td>いいえ</td></tr>
+<tr><td>沖縄県</td><td>1.9%</td><td>3.6%</td><td>+1.7ポイント</td><td>7.4</td><td>12.1</td><td>いいえ</td></tr>
+<tr><td>長野県</td><td>0.4%</td><td>2.0%</td><td>+1.6ポイント</td><td>3.1</td><td>13.7</td><td>いいえ</td></tr>
+</tbody></table>
+<p>2024年の調査では神奈川県が、1.9ポイント増かつ両端の利用者数目安が10人以上という条件を満たす。一方、宮城・兵庫・北海道・滋賀・和歌山・鳥取などの大きな見かけ上の増加は、2022年側の利用者数目安が10人未満であるため、都道府県順位や前年差として強く解釈しない。</p>
+<h2>限界</h2>
+<ul><li>分母は過去1年間にインターネットを利用した者であり、全住民に対する利用率ではない。</li><li>自己申告データは保険診療と自由診療を区別せず、NDBの保険請求とは対象・期間・単位が異なる。</li><li>公表率と公表標本数から作る利用者数目安は、複雑標本の標準誤差・信頼区間ではない。小さい値の警告として用いる。</li><li>公開された患者住所地NDB資料は全国集計であり、この調査の都道府県別結果を保険診療患者の流出入として検証することはできない。</li></ul>
+<h2>出典</h2>
+<ul><li>総務省・e-Stat：2022 <a href="https://www.e-stat.go.jp/stat-search/files?layout=dataset&amp;stat_infid=000040057188">表15</a>、2023 <a href="https://www.e-stat.go.jp/stat-search/files?layout=dataset&amp;stat_infid=000040185454">表15</a>、2024 <a href="https://www.e-stat.go.jp/stat-search/files?layout=dataset&amp;stat_infid=000040278952">表15</a>。</li><li>NDB患者住所地の全国集計・定義：厚生労働省・中医協 <a href="https://www.mhlw.go.jp/content/10808000/001591982.pdf">情報通信機器を用いた診療の患者・医療機関住所地集計</a>（NDB 2024年9–11月診療分）。</li></ul></body></html>

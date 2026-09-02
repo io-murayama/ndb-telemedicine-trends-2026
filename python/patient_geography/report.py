@@ -108,6 +108,37 @@ def _region_table(region: pd.DataFrame) -> pd.DataFrame:
     return table
 
 
+def _change_table(change: pd.DataFrame) -> pd.DataFrame:
+    table = change.loc[change["increase_at_least_1_5_points"]].copy()
+    table = table[
+        [
+            "prefecture_name",
+            "rate_2022_pct",
+            "rate_2024_pct",
+            "change_2022_2024_pct_points",
+            "event_proxy_2022",
+            "event_proxy_2024",
+            "both_endpoints_event_proxy_ge10",
+        ]
+    ]
+    table.columns = [
+        "居住都道府県",
+        "2022年",
+        "2024年",
+        "変化",
+        "利用者数目安 2022",
+        "利用者数目安 2024",
+        "両端10人以上",
+    ]
+    for column in ["2022年", "2024年"]:
+        table[column] = table[column].map(_pct)
+    table["変化"] = table["変化"].map(lambda value: f"{value:+.1f}ポイント")
+    for column in ["利用者数目安 2022", "利用者数目安 2024"]:
+        table[column] = table[column].map(lambda value: f"{value:.1f}")
+    table["両端10人以上"] = table["両端10人以上"].map(lambda value: "はい" if value else "いいえ")
+    return table
+
+
 def write_report(
     output_dir: Path,
     national: pd.DataFrame,
@@ -116,6 +147,7 @@ def write_report(
     stability: pd.DataFrame,
     pooled: pd.DataFrame,
     comparison: pd.DataFrame,
+    patient_location_change: pd.DataFrame,
 ) -> None:
     """Create a readable, self-contained report plus a Markdown source file."""
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -124,6 +156,10 @@ def write_report(
     supply_match = correlations.loc[correlations["comparison"] == "患者側利用率 vs 供給側NDB標準化割合", "spearman_rho"].mean()
     internet_match = correlations.loc[correlations["comparison"] == "患者側利用率 vs インターネット利用率", "spearman_rho"].mean()
     low_proxy = (comparison["estimated_events_proxy"] < 10).mean() * 100
+    large_increase = patient_location_change.loc[patient_location_change["increase_at_least_1_5_points"]]
+    large_increase_with_both_endpoints = large_increase.loc[
+        large_increase["both_endpoints_event_proxy_ge10"]
+    ]
 
     cases = pooled.nlargest(8, "abs_rank_gap_mean")[
         [
@@ -170,11 +206,21 @@ def write_report(
         "",
         "## 結果",
         "",
-        "![都道府県・年次別患者側利用率](../figures/figure4_patient_prefecture_heatmap.png)",
+        "![居住都道府県別・年次別の自己申告利用率（地図）](../figures/figure4_patient_prefecture_map.png)",
         "",
         f"都道府県順位の年次間Spearman相関の平均は、患者側で **{patient_stability:.2f}**、供給側NDBで **{supply_stability:.2f}** だった。患者側の県別順位には偶然変動が大きいため、以下の乖離は仮説生成として扱う。",
         "",
-        "![地方別患者側利用率](../figures/figure5_patient_region_heatmap.png)",
+        "### 居住都道府県別の2022→2024年変化",
+        "",
+        "![居住都道府県別の自己申告利用率の変化（地図）](../figures/figure18_patient_location_change_map.png)",
+        "",
+        f"利用率が1.5ポイント以上上昇した県は {len(large_increase)} 県だった。ただし、公表標本数×公表率による利用者数目安が2022年・2024年とも10人以上なのは {len(large_increase_with_both_endpoints)} 県のみである。したがって、地図は増加候補を探すための記述であり、各県での真の増加の検定結果ではない。",
+        "",
+        _table(_change_table(patient_location_change)),
+        "",
+        "この表・図の地域は回答者の居住都道府県である。保険診療と自由診療を分けない自己申告であり、NDBの患者住所地集計の代替ではない。",
+        "",
+        "![地方別患者側利用率の推移](../figures/figure5_patient_region_trend.png)",
         "",
         "### 地方別（3年平均）",
         "",
@@ -185,6 +231,8 @@ def write_report(
         f"患者側利用率と地域のインターネット利用率の年平均Spearman相関は **{internet_match:.2f}** であり、接続率だけで患者側の条件付き利用を説明できるわけではない。",
         "",
         "![患者側と供給側の4象限](../figures/figure7_patient_supply_quadrant.png)",
+        "",
+        "![患者居住地と医療機関所在地でみた地域分布の比較（地図）](../figures/figure20_patient_provider_rank_maps.png)",
         "",
         "### 乖離が大きい県（3年平均の順位差）",
         "",

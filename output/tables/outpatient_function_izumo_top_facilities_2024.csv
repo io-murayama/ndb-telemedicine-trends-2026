@@ -1,0 +1,4 @@
+﻿year,facility_code,medical_institution_code,facility_name,prefecture_code,sma_code,sma_name,municipality_code,municipality_name,online_initial_patient_days,online_repeat_patient_days,initial_suppressed,repeat_suppressed,online_observed_patient_days,online_components_complete,any_online_component_suppressed,prefecture_name,share_of_area_observed_pct,cumulative_share_of_area_observed_pct,top_n_observed_patient_days
+2024,3232030014,3211610989,出雲徳洲会病院,32,3203,出雲,32203,出雲市,1.0,232.0,False,False,233.0,True,False,島根県,94.71544715447155,94.71544715447155,246.0
+2024,3232030011,3210412528,出雲市民病院,32,3203,出雲,32203,出雲市,0.0,9.0,False,False,9.0,True,False,島根県,3.6585365853658534,98.3739837398374,246.0
+2024,3232030021,3211610658,吉野産婦人科医院,32,3203,出雲,32203,出雲市,2.0,2.0,False,False,4.0,True,False,島根県,1.6260162601626018,100.0,246.0

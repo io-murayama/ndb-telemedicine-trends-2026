@@ -1,0 +1,47 @@
+<html><head><meta charset='utf-8'><title>出雲の施設集中</title><style>body{max-width:1080px;margin:32px auto;font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans',sans-serif;line-height:1.65}img{max-width:100%;height:auto}code{background:#f4f4f4;padding:2px 4px}table{border-collapse:collapse;margin:1em 0;font-size:0.92em}th,td{border:1px solid #ccc;padding:5px 8px;text-align:right}th:first-child,td:first-child{text-align:left}</style></head><body><h1>出雲の施設集中：外来機能報告による補助検証</h1>
+<h2>結論</h2>
+<p>2024年の出雲二次医療圏では、オンライン外来の観測患者延べ数 246 のうち、最大の1施設が 233（94.7%）、上位2施設で 98.4% を占めた。これは<strong>外来機能報告の対象になった施設に限れば</strong>少数施設集中である。</p>
+<p>一方、2023年の同データはNDB地域集計の0.84%にしか相当しない規模であり、公開外来機能報告だけでは、NDBで見えた出雲の約9千回を「1〜2施設が担う」ことも「地域全体に広がる」ことも判定できない。むしろ、無床診療所の報告が任意であるという制度上の報告枠と、保険請求をほぼ全数捕捉するNDBとの間に大きな観測枠の差があることが、今回の定量検証で明確になった。</p>
+<h2>何を検証したか</h2>
+<ul><li>厚生労働省『外来機能報告』オープンデータの2022–2024年ファイルから、各施設の年次レコード（報告月=0）を抽出した。病院・有床診療所等が主たる対象で、無床診療所は任意報告である。</li><li>指標は「初診（情報通信機器を用いた場合）」と「再診（情報通信機器を用いた場合）」の外来患者延べ数の和。NDBの算定回数とは定義が異なるため、施設集中の有無を確かめる目的に限定した。</li><li><code>*</code> 等の非数値セルは0へ置換せず、表の「*等を含む施設数」として別に示した。以下のシェアは数値として観測できた患者延べ数に対するシェアである。</li></ul>
+<h2>出雲での集中度</h2>
+<table><thead><tr><th>年</th><th>報告施設数</th><th>オンライン利用あり（観測値）</th><th>患者延べ数（観測値）</th><th>上位1施設シェア</th><th>上位2施設シェア</th><th>*等を含む施設数</th></tr></thead><tbody>
+<tr><td>2022</td><td>18</td><td>0</td><td>0</td><td>—</td><td>—</td><td>0</td></tr>
+<tr><td>2023</td><td>18</td><td>1</td><td>76</td><td>100.0%</td><td>100.0%</td><td>1</td></tr>
+<tr><td>2024</td><td>18</td><td>3</td><td>246</td><td>94.7%</td><td>98.4%</td><td>0</td></tr>
+</tbody></table>
+<p><img src="../figures/figure15_izumo_facility_concentration_2024.png" alt="出雲の上位施設"></p>
+<table><thead><tr><th>施設名</th><th>市区町村</th><th>オンライン初診</th><th>オンライン再診</th><th>合計（観測値）</th><th>医療圏内シェア</th><th>累積シェア</th><th>*等あり</th></tr></thead><tbody>
+<tr><td>出雲徳洲会病院</td><td>出雲市</td><td>1</td><td>232</td><td>233</td><td>94.7%</td><td>94.7%</td><td>なし</td></tr>
+<tr><td>出雲市民病院</td><td>出雲市</td><td>0</td><td>9</td><td>9</td><td>3.7%</td><td>98.4%</td><td>なし</td></tr>
+<tr><td>吉野産婦人科医院</td><td>出雲市</td><td>2</td><td>2</td><td>4</td><td>1.6%</td><td>100.0%</td><td>なし</td></tr>
+</tbody></table>
+<p>完全観測かつ患者延べ数100以上の全国140医療圏との比較では、上位1施設シェアは高い順40位である。 この順位は「利用率が高い」ことの順位ではなく、利用がある地域の中で少数施設へ偏る程度の比較である。</p>
+<h2>鳥取・広島を含む地域比較</h2>
+<p>出雲の極端さが規模だけなのか、施設集中も伴うのかを確認するため、島根・鳥取・広島の全二次医療圏を同じ年次・同じ外来機能報告で比較した。</p>
+<p><img src="../figures/figure16_chugoku_sma_facility_concentration_2024.png" alt="中国地方3県の二次医療圏比較"></p>
+<table><thead><tr><th>都道府県</th><th>二次医療圏</th><th>報告施設数</th><th>利用あり施設（観測値）</th><th>患者延べ数（観測値）</th><th>上位1施設シェア</th><th>上位2施設シェア</th><th>*等を含む施設数</th></tr></thead><tbody>
+<tr><td>鳥取県</td><td>東部</td><td>20</td><td>2</td><td>230</td><td>75.2%</td><td>100.0%</td><td>0</td></tr>
+<tr><td>鳥取県</td><td>中部</td><td>15</td><td>3</td><td>73</td><td>49.3%</td><td>84.9%</td><td>0</td></tr>
+<tr><td>鳥取県</td><td>西部</td><td>33</td><td>5</td><td>32</td><td>40.6%</td><td>68.8%</td><td>0</td></tr>
+<tr><td>島根県</td><td>大田</td><td>7</td><td>3</td><td>252</td><td>69.8%</td><td>95.6%</td><td>0</td></tr>
+<tr><td>島根県</td><td>出雲</td><td>18</td><td>3</td><td>246</td><td>94.7%</td><td>98.4%</td><td>0</td></tr>
+<tr><td>島根県</td><td>松江</td><td>22</td><td>2</td><td>23</td><td>91.3%</td><td>100.0%</td><td>0</td></tr>
+<tr><td>広島県</td><td>福山・府中</td><td>63</td><td>5</td><td>3,201</td><td>92.5%</td><td>97.0%</td><td>0</td></tr>
+<tr><td>広島県</td><td>広島</td><td>142</td><td>15</td><td>1,347</td><td>37.0%</td><td>47.1%</td><td>0</td></tr>
+<tr><td>広島県</td><td>尾三</td><td>30</td><td>1</td><td>188</td><td>100.0%</td><td>100.0%</td><td>0</td></tr>
+<tr><td>広島県</td><td>広島中央</td><td>24</td><td>3</td><td>131</td><td>57.3%</td><td>92.4%</td><td>0</td></tr>
+<tr><td>広島県</td><td>呉</td><td>35</td><td>2</td><td>56</td><td>73.2%</td><td>100.0%</td><td>0</td></tr>
+<tr><td>広島県</td><td>広島西</td><td>15</td><td>1</td><td>7</td><td>100.0%</td><td>100.0%</td><td>0</td></tr>
+</tbody></table>
+<h2>上位施設の年次推移</h2>
+<p><img src="../figures/figure17_izumo_top_facility_trend.png" alt="出雲の上位施設の推移"></p>
+<p>この図は2024年の上位施設を遡って描いたものであり、各年の全上位施設を網羅するものではない。施設コードを用いて年次を結んでいるが、施設統合・移転や報告範囲の変化は区別できない。</p>
+<h2>NDB地域集計との位置づけ：仮説を検証できなかった理由</h2>
+<p>2023年は、外来機能報告の観測患者延べ数 76 は、同じ医療圏のNDB主要3項目 9,002 の0.84%にとどまった。NDB主要3項目が100回以上で欠測のない143医療圏中では、この比率は小さい順27位である。</p>
+<p>この乖離は、単位の違いだけでは説明できないほど大きい。外来機能報告の上位施設が、NDB地域集計の主要な算定主体であると推論してはならない。無床診療所が任意報告であるため、NDBの大部分が公開外来機能報告に現れない無床診療所から来ている可能性、または両制度の報告範囲・時点・計上ルールの差が考えられる。ただし、公開データだけではいずれを区別できない。</p>
+<p>したがって、今回の施設別データが与える答えは二段階である。(1) 報告対象施設内には明瞭な少数施設集中がある。(2) しかしその部分はNDBの出雲集計を説明するには小さすぎる。NDBの極端値の供給主体を確認するには、施設別NDB特別抽出で、各施設の保険請求実数・診療科・患者住所地・継続診療の別を確認する必要がある。</p>
+<h2>限界</h2>
+<ul><li>外来機能報告は施設報告の患者延べ数であり、NDBのレセプト算定回数ではない。両データの差は、期間・集計単位・対象報告施設・診療区分の差を含む。特に無床診療所は任意報告である。</li><li>外来機能報告のみから、保険診療か自由診療か、NDB地域集計に占める施設別寄与、患者の居住地・流入を判定できない。</li><li>小さい値が <code>*</code> 等で非数値となる場合があるため、ここでの施設シェアは観測部分に対する値である。特に小規模な医療圏同士の集中度比較は慎重に扱う。</li><li>施設名・コードの年次照合は公開コードに依存しており、組織再編等による連続性までは検証していない。</li></ul>
+<h2>出典</h2>
+<ul><li>厚生労働省 <a href="https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/open_data_00019.html">令和6年度外来機能報告公表データ</a>（本リポジトリ <code>data/raw/gairaikinouhoukoku/2022.xlsx</code>、<code>2023.xlsx</code>、<code>2024.xlsx</code>）。同ページに、報告対象が病床機能報告対象医療機関等と意向確認済みの無床診療所である旨が示されている。</li><li>NDB供給地集計との比較：本リポジトリ <code>output/tables/ndb_provider_sma_year.csv</code>。NDBの定義・患者住所地との区別は <code>output/reports/ndb_supply_geography_report.html</code> を参照。</li></ul></body></html>

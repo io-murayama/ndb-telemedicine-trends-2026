@@ -148,14 +148,29 @@ def validate_survey(prefecture: pd.DataFrame, region: pd.DataFrame, national: pd
 
 
 def load_ndb_supply(root: Path) -> pd.DataFrame:
-    """Load the existing NDB medical-institution-location standardized table."""
+    """Load the NDB medical-institution-location standardized table.
+
+    The R standardisation product is not committed because it is generated from
+    raw NDB workbooks.  The geography pipeline commits its derived comparison
+    table, so it is a deterministic fallback for regenerating figures and the
+    narrative report in a clone that lacks the raw R intermediate.
+    """
     path = root / "output" / "tables" / "prefecture_standardized.csv"
-    if not path.exists():
-        raise FileNotFoundError(f"NDB supply-side table is missing: {path}")
-    supply = pd.read_csv(path, dtype={"prefecture_code": str})
-    supply["prefecture_code"] = supply["prefecture_code"].str.zfill(2)
-    supply = supply.rename(columns={"fiscal_year": "year", "standardized_proportion_pct": "supply_standardized_rate_pct"})
-    supply = supply[["year", "prefecture_code", "prefecture_name", "supply_standardized_rate_pct"]]
+    if path.exists():
+        supply = pd.read_csv(path, dtype={"prefecture_code": str})
+        supply["prefecture_code"] = supply["prefecture_code"].str.zfill(2)
+        supply = supply.rename(columns={"fiscal_year": "year", "standardized_proportion_pct": "supply_standardized_rate_pct"})
+        supply = supply[["year", "prefecture_code", "prefecture_name", "supply_standardized_rate_pct"]]
+    else:
+        derived_path = root / "output" / "tables" / "patient_supply_comparison.csv"
+        if not derived_path.exists():
+            raise FileNotFoundError(
+                "NDB supply-side table is missing: "
+                f"{path}; derived fallback is also missing: {derived_path}"
+            )
+        supply = pd.read_csv(derived_path, dtype={"prefecture_code": str})
+        supply["prefecture_code"] = supply["prefecture_code"].str.zfill(2)
+        supply = supply[["year", "prefecture_code", "prefecture_name", "supply_standardized_rate_pct"]].drop_duplicates()
     if supply.shape[0] != len(YEARS) * 47:
         raise ValueError(f"Expected 141 NDB supply rows, found {supply.shape[0]}")
     return supply
