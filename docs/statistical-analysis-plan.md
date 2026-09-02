@@ -169,7 +169,7 @@ NDB は全国規模の大規模データであるため、**p 値よりも effec
 
 ## 6. 副次解析
 
-都道府県別に **2024 年度** の **人口あたり** ICT 算定回数を算出し、医療機関所在地による地域 variation を記述する。
+都道府県別に **2024 年度** の **人口あたり** ICT 算定回数を算出し、医療機関所在地による地域 variation を記述する。加えて **2022→2024** の人口あたり算定回数の変化を都道府県別に評価し、Supplementary Figure E で可視化する。
 
 $$
 \text{人口あたり ICT 算定回数}
@@ -195,6 +195,7 @@ $$
 | Supplementary Figure B | 2019～2021 年度の旧オンライン診療料（historical context） |
 | Supplementary Figure C | 都道府県別人口あたり ICT 算定回数（**2024 年度**、縦棒、北から順） |
 | Supplementary Figure D | 都道府県別人口あたり ICT 算定回数（**2024 年度**、地図 heatmap、log10 スケール） |
+| Supplementary Figure E | 都道府県別人口あたり ICT 算定回数の変化（**2022→2024**、ロリポップ、北から順） |
 
 ---
 

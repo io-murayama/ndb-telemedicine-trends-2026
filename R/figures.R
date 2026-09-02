@@ -405,3 +405,40 @@ plot_supplementary_prefecture_per_capita_map <- function(per_capita_df, fiscal_y
       panel.grid = ggplot2::element_blank()
     )
 }
+
+plot_supplementary_prefecture_per_capita_change <- function(change_df, baseline_year = 2022, end_year = 2024) {
+  require_ggplot2()
+  df <- order_prefectures_north_to_south(change_df)
+  df$prefecture_name <- factor(df$prefecture_name, levels = df$prefecture_name)
+  df$direction <- ifelse(df$abs_change >= 0, "増加", "減少")
+  df$direction <- factor(df$direction, levels = c("増加", "減少"))
+
+  ggplot2::ggplot(df, ggplot2::aes(abs_change, prefecture_name, color = direction)) +
+    ggplot2::geom_vline(xintercept = 0, color = "#cccccc", linewidth = 0.35) +
+    ggplot2::geom_segment(
+      ggplot2::aes(x = 0, xend = abs_change, yend = prefecture_name),
+      linewidth = 0.7
+    ) +
+    ggplot2::geom_point(size = 2) +
+    ggplot2::scale_color_manual(
+      values = c("増加" = "#1b9e77", "減少" = "#bdbdbd"),
+      guide = "none"
+    ) +
+    ggplot2::coord_flip() +
+    ggplot2::labs(
+      title = "Supplementary Figure E. 都道府県別人口あたり ICT 算定回数の変化",
+      subtitle = paste0(
+        baseline_year,
+        "→",
+        end_year,
+        " 年度の絶対差（10万人あたり）。医療機関所在地・北から順（Figure 4 と同型のロリポップ）"
+      ),
+      x = "変化量（10万人あたり）",
+      y = NULL
+    ) +
+    ggplot2::theme_bw(base_size = 10) +
+    ggplot2::theme(
+      panel.grid.major.y = ggplot2::element_blank(),
+      axis.text.y = ggplot2::element_text(size = 7)
+    )
+}

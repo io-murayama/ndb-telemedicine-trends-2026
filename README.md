@@ -80,6 +80,7 @@ ndb-telemedicine-trends-2026/
 | 主解析セル | `output/tables/main_analysis_cells.csv` |
 | モデル | `output/tables/model_fixed_effects.csv` |
 | 都道府県（人口あたり） | `output/tables/prefecture_per_capita.csv` |
+| 都道府県（2022→2024 変化） | `output/tables/prefecture_per_capita_change_2022_2024.csv` |
 | Figure 1–4 | `output/figures/figure*.png` |
 | Supplementary | `output/figures/supplementary_*.png` |
 | レポート | `output/reports/analysis_report.html` |
