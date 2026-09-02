@@ -2,6 +2,18 @@
 
 副次解析（Supplementary Figure C）の **人口あたり ICT 算定回数** の分母に使用する。
 
+## 都道府県人口（参照データ）
+
+副次解析（Supplementary Figure C / D）の **人口あたり ICT 算定回数** の分母に使用する。
+
+## 都道府県境界（地図用）
+
+| 項目 | 内容 |
+|------|------|
+| ファイル | `prefectures.geojson` |
+| ソース | [dataofjapan/land](https://github.com/dataofjapan/land)（MIT） |
+| 用途 | Supplementary Figure D（choropleth） |
+
 ## 必要なデータ
 
 | 項目 | 内容 |

@@ -194,7 +194,8 @@ $$
 | Figure 4B | 年齢階級別 ICT 利用割合の変化（再診・外来、$p_{2024} - p_{2022}$、横棒） |
 | Supplementary Figure A | 制度変更 timeline（2018 / 2020 / 2022 / 2024） |
 | Supplementary Figure B | 2019～2021 年度の旧オンライン診療料（historical context） |
-| Supplementary Figure C | 都道府県別人口あたり ICT 算定回数（**2024 年度**、縦棒） |
+| Supplementary Figure C | 都道府県別人口あたり ICT 算定回数（**2024 年度**、縦棒、北から順） |
+| Supplementary Figure D | 都道府県別人口あたり ICT 算定回数（**2024 年度**、地図 heatmap） |
 
 ---
 

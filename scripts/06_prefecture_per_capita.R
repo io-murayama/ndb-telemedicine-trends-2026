@@ -3,7 +3,7 @@
 
 source("scripts/00_setup.R")
 
-for (f in c("codes.R", "load_xlsx.R", "population.R", "per_capita.R", "figures.R")) {
+for (f in c("codes.R", "load_xlsx.R", "population.R", "per_capita.R", "map_geo.R", "figures.R")) {
   sys.source(file.path(PROJECT_ROOT, "R", f), envir = globalenv())
 }
 
@@ -26,13 +26,22 @@ saveRDS(per_capita, file.path(intermediate_dir, "prefecture_per_capita.rds"))
 
 save_per_capita_table(per_capita, root = PROJECT_ROOT)
 
-fig <- plot_supplementary_prefecture_per_capita(per_capita, fiscal_year = fiscal_year)
+fig_bar <- plot_supplementary_prefecture_per_capita(per_capita, fiscal_year = fiscal_year)
 save_figure(
-  fig,
+  fig_bar,
   "supplementary_prefecture_per_capita_2024.png",
   root = PROJECT_ROOT,
   width = 14,
   height = 6
+)
+
+fig_map <- plot_supplementary_prefecture_per_capita_map(per_capita, fiscal_year = fiscal_year, root = PROJECT_ROOT)
+save_figure(
+  fig_map,
+  "supplementary_prefecture_per_capita_map_2024.png",
+  root = PROJECT_ROOT,
+  width = 8,
+  height = 9
 )
 
 message(sprintf(

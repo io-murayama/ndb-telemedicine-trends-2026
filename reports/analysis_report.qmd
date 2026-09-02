@@ -254,9 +254,13 @@ knitr::kable(
 
 ![Supplementary Figure C. 都道府県別人口あたり（2024）](../output/figures/supplementary_prefecture_per_capita_2024.png)
 
+![Supplementary Figure D. 都道府県別人口あたり（2024、地図）](../output/figures/supplementary_prefecture_per_capita_map_2024.png)
+
 #### 解釈
 
 - **医療機関所在地** に基づく都道府県別の **人口あたり ICT 算定回数**（10万人あたり、2024 年度）。
+- 棒グラフ（Figure C）は都道府県を **北から南**（JIS コード順）に並べる。
+- 地図（Figure D）は `data/reference/prefectures.geojson`（[dataofjapan/land](https://github.com/dataofjapan/land)）を用いた choropleth。
 - 分母は **総務省統計局人口推計**（都道府県別総人口）。`data/reference/prefecture_population.csv` を参照。
 - **地域の人口規模を考慮した利用率** として解釈できる。ただし医療機関所在地と患者居住地は一致しない場合がある（SAP 6）。
 
@@ -295,7 +299,7 @@ knitr::kable(
 | 増加率 | `output/tables/change_2022_2024_by_age.csv` |
 | 都道府県（人口あたり） | `output/tables/prefecture_per_capita.csv` |
 | Figure 1–4 | `output/figures/figure*.png` |
-| Supp Fig A–C | `output/figures/supplementary_*.png` |
+| Supp Fig A–D | `output/figures/supplementary_*.png` |
 
 ---
 

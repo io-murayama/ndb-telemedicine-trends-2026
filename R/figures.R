@@ -340,6 +340,7 @@ save_figure <- function(plot, filename, root = project_root(), width = 10, heigh
 plot_supplementary_prefecture_per_capita <- function(per_capita_df, fiscal_year = 2024) {
   require_ggplot2()
   df <- per_capita_df[per_capita_df$fiscal_year == fiscal_year, , drop = FALSE]
+  df <- order_prefectures_north_to_south(df)
 
   rate_col <- if ("rate_per_population" %in% names(df)) {
     "rate_per_population"
@@ -347,7 +348,6 @@ plot_supplementary_prefecture_per_capita <- function(per_capita_df, fiscal_year 
     "rate_per_population_pct"
   }
 
-  df <- df[order(df[[rate_col]]), , drop = FALSE]
   df$prefecture_name <- factor(df$prefecture_name, levels = df$prefecture_name)
 
   y_label <- if (rate_col == "rate_per_population") "10万人あたり算定回数" else "10万人あたり算定回数（‰）"
@@ -358,7 +358,7 @@ plot_supplementary_prefecture_per_capita <- function(per_capita_df, fiscal_year 
       title = "Supplementary Figure C. 都道府県別人口あたり ICT 算定回数",
       subtitle = paste0(
         fiscal_year,
-        " 年度（医療機関所在地）。分母: 総務省統計局人口推計に基づく都道府県人口"
+        " 年度（医療機関所在地・北から順）。分母: 総務省統計局人口推計に基づく都道府県人口"
       ),
       x = "都道府県（医療機関所在地）",
       y = y_label
@@ -366,5 +366,35 @@ plot_supplementary_prefecture_per_capita <- function(per_capita_df, fiscal_year 
     ggplot2::theme_bw(base_size = 10) +
     ggplot2::theme(
       axis.text.x = ggplot2::element_text(angle = 90, hjust = 1, vjust = 0.5, size = 6)
+    )
+}
+
+plot_supplementary_prefecture_per_capita_map <- function(per_capita_df, fiscal_year = 2024, root = project_root()) {
+  require_ggplot2()
+  require_sf()
+  geo <- load_prefecture_geo(root)
+  merged <- merge_prefecture_geo(geo, per_capita_df, fiscal_year = fiscal_year)
+
+  ggplot2::ggplot(merged) +
+    ggplot2::geom_sf(ggplot2::aes(fill = rate_per_population), color = "white", linewidth = 0.15) +
+    ggplot2::scale_fill_viridis_c(
+      option = "C",
+      name = "10万人あたり\n算定回数",
+      na.value = "grey85"
+    ) +
+    ggplot2::coord_sf(expand = FALSE) +
+    ggplot2::labs(
+      title = "Supplementary Figure D. 都道府県別人口あたり ICT 算定回数（地図）",
+      subtitle = paste0(
+        fiscal_year,
+        " 年度（医療機関所在地）。色が濃いほど人口あたり ICT 算定回数が高い"
+      ),
+      x = NULL,
+      y = NULL
+    ) +
+    ggplot2::theme_minimal(base_size = 10) +
+    ggplot2::theme(
+      legend.position = "right",
+      panel.grid = ggplot2::element_blank()
     )
 }
