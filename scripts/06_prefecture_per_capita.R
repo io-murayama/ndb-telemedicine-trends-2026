@@ -17,20 +17,25 @@ baseline_year <- 2022L
 
 cross <- load_cross_prefecture_sex_age(fiscal_years = analysis_years, root = PROJECT_ROOT)
 pop <- population_for_years(load_prefecture_population(PROJECT_ROOT), analysis_years)
-per_capita <- prepare_per_capita_table(cross, pop, per = 100000)
-per_capita_2024 <- per_capita[per_capita$fiscal_year == fiscal_year, , drop = FALSE]
+per_capita_all <- prepare_all_prefecture_per_capita(cross, pop, per = 100000)
+per_capita_2024 <- per_capita_all[
+  per_capita_all$fiscal_year == fiscal_year & per_capita_all$visit_scope == "total",
+  ,
+  drop = FALSE
+]
 prefecture_change <- aggregate_prefecture_change_2022_2024(
-  per_capita,
+  per_capita_all,
   baseline_year = baseline_year,
   end_year = fiscal_year
 )
+prefecture_change_total <- prefecture_change[prefecture_change$visit_scope == "total", , drop = FALSE]
 
 intermediate_dir <- path_from_root("output", "intermediate", root = PROJECT_ROOT)
 if (!dir.exists(intermediate_dir)) {
   dir.create(intermediate_dir, recursive = TRUE, showWarnings = FALSE)
 }
 saveRDS(cross, file.path(intermediate_dir, "cross_prefecture_sex_age.rds"))
-saveRDS(per_capita, file.path(intermediate_dir, "prefecture_per_capita.rds"))
+saveRDS(per_capita_all, file.path(intermediate_dir, "prefecture_per_capita.rds"))
 saveRDS(prefecture_change, file.path(intermediate_dir, "prefecture_per_capita_change.rds"))
 
 save_per_capita_table(per_capita_2024, root = PROJECT_ROOT)
@@ -67,12 +72,12 @@ save_figure(
   fig_change,
   "supplementary_prefecture_per_capita_change_2022_2024.png",
   root = PROJECT_ROOT,
-  width = 16,
+  width = 22,
   height = 9
 )
 
 fig_change_map <- plot_supplementary_prefecture_per_capita_change_map(
-  prefecture_change,
+  prefecture_change_total,
   baseline_year = baseline_year,
   end_year = fiscal_year,
   root = PROJECT_ROOT
@@ -87,7 +92,7 @@ save_figure(
 
 message(sprintf(
   "[06_prefecture_per_capita] prefectures=%s | years=%s | change=%s-%s",
-  length(unique(per_capita$prefecture_code)),
+  length(unique(per_capita_all$prefecture_code)),
   paste(analysis_years, collapse = ","),
   baseline_year,
   fiscal_year

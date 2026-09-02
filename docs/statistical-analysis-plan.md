@@ -195,7 +195,7 @@ $$
 | Supplementary Figure B | 2019～2021 年度の旧オンライン診療料（historical context） |
 | Supplementary Figure C | 都道府県別人口あたり ICT 算定回数（**2024 年度**、縦棒、北から順） |
 | Supplementary Figure D | 都道府県別人口あたり ICT 算定回数（**2024 年度**、地図 heatmap、log10 スケール） |
-| Supplementary Figure E | 都道府県別人口あたり ICT 算定回数の変化（**2022→2024**、ロリポップ、北から順） |
+| Supplementary Figure E | 都道府県別人口あたり ICT 算定回数の変化（**2022→2024**、初診・再診・外来・合計の3パネル + ロリポップ） |
 | Supplementary Figure F | 都道府県別人口あたり ICT 算定回数の変化率（**2022→2024**、地図 heatmap） |
 
 ---
