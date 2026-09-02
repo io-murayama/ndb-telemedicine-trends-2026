@@ -167,26 +167,28 @@ knitr::kable(
 
 ---
 
-### 3.3a 年齢・初診／再診別の増加率（Figure 4）
+### 3.3a 年齢別の普及（Figure 4A / 4B）
 
-![Figure 4. 年齢階級別増加率（2022→2024）](../output/figures/figure4_change_by_age_visit.png)
+![Figure 4A. 初診の年齢階級別変化（2022→2024）](../output/figures/figure4a_initial_change_by_age.png)
+
+![Figure 4B. 再診・外来の年齢階級別変化（2022→2024）](../output/figures/figure4b_followup_change_by_age.png)
 
 ```{r change-table}
 change <- read_tab("change_2022_2024_by_age.csv")
-change$相対増加率 <- sprintf("%.1f%%", change$relative_change_pct)
 change$絶対差 <- sprintf("%.3f pp", change$abs_change_pp)
 change$種別 <- ifelse(change$visit_type == "initial", "初診", "再診・外来")
 knitr::kable(
-  change[order(change$age_group), c("age_group", "種別", "相対増加率", "絶対差")],
-  col.names = c("年齢階級", "種別", "相対増加率（2022→2024）", "絶対差（pp）"),
-  caption = "表2a. 年齢階級・初診／再診別の増加（2022→2024）"
+  change[order(change$age_group), c("age_group", "種別", "絶対差")],
+  col.names = c("年齢階級", "種別", "p2024 − p2022（pp）"),
+  caption = "表2a. 年齢階級別の絶対変化（2022→2024）"
 )
 ```
 
 #### 解釈
 
-- **全年齢帯で増加**。相対増加率は初診・再診ともに高いが、**若年層（とくに 0～4 歳、20～30 代）で増加率が大きい** 傾向。
-- 初診と再診・外来で **増加パターンの形は類似** するが、水準（絶対割合）は初診の方が高い（Figure 2 参照）。
+- **Figure 4A / 4B** は、年齢階級ごとの **絶対差** $p_{2024} - p_{2022}$（percentage points）を横棒で示し、「**誰に普及したか**」を比較する。
+- 初診・再診・外来は **Figure を分離** して示す。
+- **若年層（とくに 0～4 歳、20～30 代）で絶対差が大きい** 傾向。高齢層でも増加はあるが、水準・増分ともに小さい。
 
 ---
 

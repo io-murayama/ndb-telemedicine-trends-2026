@@ -258,44 +258,45 @@ plot_figure3_sex_stratified <- function(cells) {
 
   ggplot2::ggplot(
     df,
-    ggplot2::aes(sex_label, proportion_pct, color = visit_type_label, group = visit_type_label)
+    ggplot2::aes(sex_label, proportion_pct, fill = visit_type_label)
   ) +
-    ggplot2::geom_line(linewidth = 0.8) +
-    ggplot2::geom_point(size = 2.2) +
+    ggplot2::geom_col(position = ggplot2::position_dodge(width = 0.8), width = 0.7) +
     ggplot2::facet_wrap(~ fiscal_year, nrow = 1) +
-    ggplot2::scale_color_manual(values = c("#1b9e77", "#d95f02")) +
+    ggplot2::scale_fill_manual(values = c("#1b9e77", "#d95f02")) +
     ggplot2::labs(
       title = "Figure 3B. 性別オンライン診療割合（年齢集計）",
       subtitle = "全年齢を合算した性別の割合（2022–2024）",
       x = "性別",
       y = "割合（%）",
-      color = NULL
+      fill = NULL
     ) +
     ggplot2::theme_bw(base_size = 10) +
     ggplot2::theme(legend.position = "bottom")
 }
 
-plot_figure4_change_by_age <- function(change, codes_cfg) {
+plot_figure4_change_by_age <- function(change, codes_cfg, visit_type = c("initial", "followup")) {
   require_ggplot2()
+  visit_type <- match.arg(visit_type)
   df <- prepare_change_plot_data(change, codes_cfg)
+  df <- df[df$visit_type == visit_type, , drop = FALSE]
 
-  ggplot2::ggplot(
-    df,
-    ggplot2::aes(age_group, relative_change_pct, fill = visit_type_label)
-  ) +
-    ggplot2::geom_col(position = ggplot2::position_dodge(width = 0.8), width = 0.75) +
-    ggplot2::scale_fill_manual(values = c("#377eb8", "#ff7f00")) +
+  visit_label <- ifelse(visit_type == "initial", "初診", "再診・外来")
+  figure_suffix <- ifelse(visit_type == "initial", "A", "B")
+  bar_color <- ifelse(visit_type == "initial", "#377eb8", "#ff7f00")
+
+  ggplot2::ggplot(df, ggplot2::aes(abs_change_pp, age_group)) +
+    ggplot2::geom_col(fill = bar_color, width = 0.75) +
+    ggplot2::coord_flip() +
     ggplot2::labs(
-      title = "Figure 4. 年齢階級別の ICT 利用割合増加率（2022→2024）",
-      subtitle = "相対増加率 = (2024 割合 / 2022 割合 − 1) × 100。年齢階級・初診／再診別。",
-      x = "年齢階級",
-      y = "相対増加率（%）",
-      fill = NULL
+      title = paste0("Figure 4", figure_suffix, ". Age-specific change from 2022 to 2024（", visit_label, "）"),
+      subtitle = "絶対差 p2024 − p2022（percentage points）。誰に普及したかを年齢階級別に示す。",
+      x = "変化量（pp）",
+      y = "年齢階級"
     ) +
     ggplot2::theme_bw(base_size = 10) +
     ggplot2::theme(
-      legend.position = "bottom",
-      axis.text.x = ggplot2::element_text(angle = 90, hjust = 1, vjust = 0.5, size = 7)
+      panel.grid.major.y = ggplot2::element_blank(),
+      axis.text.y = ggplot2::element_text(size = 8)
     )
 }
 
