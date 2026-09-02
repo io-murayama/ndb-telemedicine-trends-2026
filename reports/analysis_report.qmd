@@ -240,13 +240,12 @@ SAP の方針どおり、**p 値より effect size（RR・percentage-point diffe
 
 ```{r pref-table}
 pref <- read_tab("prefecture_per_capita.csv")
-pref2024 <- pref[pref$fiscal_year == 2024, ]
-pref2024 <- pref2024[order(-pref2024$rate_per_population), ]
-pref2024$率 <- sprintf("%.1f", pref2024$rate_per_population)
+pref <- pref[order(-pref$rate_per_population), ]
+pref$率 <- sprintf("%.1f", pref$rate_per_population)
 knitr::kable(
   rbind(
-    head(pref2024[, c("prefecture_name", "率")], 5),
-    tail(pref2024[, c("prefecture_name", "率")], 5)
+    head(pref[, c("prefecture_name", "率")], 5),
+    tail(pref[, c("prefecture_name", "率")], 5)
   ),
   col.names = c("都道府県", "10万人あたり算定回数（2024）"),
   caption = "表5. 都道府県別人口あたり ICT 算定回数（上位・下位5県、2024）"
@@ -255,13 +254,11 @@ knitr::kable(
 
 ![Supplementary Figure C. 都道府県別人口あたり（2024）](../output/figures/supplementary_prefecture_per_capita_2024.png)
 
-![Supplementary Figure C. 都道府県別人口あたり（2022–2024 平均）](../output/figures/supplementary_prefecture_per_capita_pooled.png)
-
 #### 解釈
 
-- **医療機関所在地** に基づく都道府県別の **人口あたり ICT 算定回数**（10万人あたり）。
+- **医療機関所在地** に基づく都道府県別の **人口あたり ICT 算定回数**（10万人あたり、2024 年度）。
 - 分母は **総務省統計局人口推計**（都道府県別総人口）。`data/reference/prefecture_population.csv` を参照。
-- 年齢・性別標準化と異なり、**地域の人口規模を考慮した利用率** として解釈できる。ただし医療機関所在地と患者居住地は一致しない場合がある（SAP 6）。
+- **地域の人口規模を考慮した利用率** として解釈できる。ただし医療機関所在地と患者居住地は一致しない場合がある（SAP 6）。
 
 ---
 
