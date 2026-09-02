@@ -439,7 +439,7 @@ plot_supplementary_prefecture_per_capita_change <- function(change_df, baseline_
     ggplot2::theme_bw(base_size = 10) +
     ggplot2::theme(
       panel.grid.major.y = ggplot2::element_blank(),
-      axis.text.y = ggplot2::element_text(size = 7)
+      axis.text.y = ggplot2::element_text(size = 6, angle = 90, hjust = 1, vjust = 0.5)
     )
 }
 

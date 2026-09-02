@@ -67,8 +67,8 @@ save_figure(
   fig_change,
   "supplementary_prefecture_per_capita_change_2022_2024.png",
   root = PROJECT_ROOT,
-  width = 9,
-  height = 12
+  width = 16,
+  height = 9
 )
 
 fig_change_map <- plot_supplementary_prefecture_per_capita_change_map(
