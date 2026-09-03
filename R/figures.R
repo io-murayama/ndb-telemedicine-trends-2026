@@ -21,52 +21,58 @@ policy_events <- data.frame(
 visit_type_labels <- c(
   all_outpatient = "オンライン診療料（2019–21）",
   initial = "初診（ICT）",
-  followup = "再診・外来（ICT）"
+  followup = "再診・外来（ICT）",
+  all = "全診療（ICT）"
 )
 
-ict_visit_type_labels <- c(
-  initial = "初診（ICT）",
-  followup = "再診・外来（ICT）"
-)
+ict_all_label <- "全診療（ICT）"
 
 filter_ict_trend <- function(trend, fiscal_years = c(2022, 2023, 2024)) {
-  trend[trend$era == "ict" & trend$visit_type %in% c("initial", "followup") &
+  has_all <- any(trend$visit_type == "all" & trend$era == "ict")
+  vt <- if (has_all) "all" else c("initial", "followup")
+  out <- trend[trend$era == "ict" & trend$visit_type %in% vt &
     trend$fiscal_year %in% fiscal_years, , drop = FALSE]
+  if (!has_all && nrow(out) > 0L) {
+    online <- stats::aggregate(online_count ~ fiscal_year + era, data = out, sum)
+    denom <- stats::aggregate(denominator_count ~ fiscal_year + era, data = out, sum)
+    out <- merge(online, denom, by = c("fiscal_year", "era"))
+    out$visit_type <- "all"
+    out$proportion <- out$online_count / out$denominator_count
+  }
+  out
 }
 
 filter_legacy_trend <- function(trend) {
   trend[trend$era == "legacy" & trend$visit_type == "all_outpatient", , drop = FALSE]
 }
 
-prepare_trend_plot_data <- function(trend, visit_labels = visit_type_labels) {
-  trend$series <- visit_labels[trend$visit_type]
-  trend$series <- factor(trend$series, levels = unname(visit_labels))
+prepare_trend_plot_data <- function(trend, series_label = ict_all_label) {
+  trend$series <- series_label
   trend$proportion_pct <- trend$proportion * 100
   trend
 }
 
+ensure_pooled_cells <- function(cells) {
+  if (all(cells$visit_type == "all")) {
+    return(cells)
+  }
+  pool_visit_types_cells(cells)
+}
+
 prepare_age_plot_data <- function(cells, codes_cfg) {
-  age_cells <- aggregate_cells_by_age(cells)
+  age_cells <- aggregate_cells_by_age(ensure_pooled_cells(cells))
   age_levels <- codes_cfg$age_groups
   age_cells$age_group <- factor(age_cells$age_group, levels = age_levels)
-  age_cells$visit_type_label <- factor(
-    ifelse(age_cells$visit_type == "initial", "初診", "再診・外来"),
-    levels = c("初診", "再診・外来")
-  )
   age_cells$fiscal_year <- factor(age_cells$fiscal_year)
   age_cells$proportion_pct <- age_cells$proportion * 100
   age_cells
 }
 
 prepare_sex_plot_data <- function(cells) {
-  sex_cells <- aggregate_cells_by_sex(cells)
+  sex_cells <- aggregate_cells_by_sex(ensure_pooled_cells(cells))
   sex_cells$sex_label <- factor(
     ifelse(sex_cells$sex == "male", "男", "女"),
     levels = c("男", "女")
-  )
-  sex_cells$visit_type_label <- factor(
-    ifelse(sex_cells$visit_type == "initial", "初診", "再診・外来"),
-    levels = c("初診", "再診・外来")
   )
   sex_cells$fiscal_year <- factor(sex_cells$fiscal_year)
   sex_cells$proportion_pct <- sex_cells$proportion * 100
@@ -74,21 +80,18 @@ prepare_sex_plot_data <- function(cells) {
 }
 
 prepare_change_plot_data <- function(change, codes_cfg) {
+  if ("visit_type" %in% names(change) && !all(change$visit_type == "all")) {
+    # Recompute from pooled proportions if legacy split change table is passed
+    stop("change table must be pooled (visit_type == \"all\"). Re-run scripts/03_build_tables.R.", call. = FALSE)
+  }
   change$age_group <- factor(change$age_group, levels = codes_cfg$age_groups)
-  change$visit_type_label <- factor(
-    ifelse(change$visit_type == "initial", "初診", "再診・外来"),
-    levels = c("初診", "再診・外来")
-  )
   change
 }
 
 prepare_cells_plot_data <- function(cells, codes_cfg) {
+  cells <- ensure_pooled_cells(cells)
   age_levels <- codes_cfg$age_groups
   cells$age_group <- factor(cells$age_group, levels = age_levels)
-  cells$visit_type_label <- factor(
-    ifelse(cells$visit_type == "initial", "初診", "再診・外来"),
-    levels = c("初診", "再診・外来")
-  )
   cells$sex_label <- factor(
     ifelse(cells$sex == "male", "男", "女"),
     levels = c("男", "女")
@@ -101,40 +104,62 @@ prepare_cells_plot_data <- function(cells, codes_cfg) {
 plot_figure1_trend <- function(trend) {
   require_ggplot2()
   ict <- filter_ict_trend(trend)
-  df <- prepare_trend_plot_data(ict, visit_labels = ict_visit_type_labels)
+  df <- prepare_trend_plot_data(ict)
 
-  count_plot <- ggplot2::ggplot(df, ggplot2::aes(fiscal_year, online_count, color = series, group = series)) +
-    ggplot2::geom_line(linewidth = 0.9) +
-    ggplot2::geom_point(size = 2.5) +
-    ggplot2::scale_color_brewer(palette = "Dark2") +
+  slide_theme <- ggplot2::theme_classic(base_size = 20) +
+    ggplot2::theme(
+      panel.grid.major = ggplot2::element_blank(),
+      panel.grid.minor = ggplot2::element_blank(),
+      plot.title = ggplot2::element_text(size = 22, face = "bold", hjust = 0, margin = ggplot2::margin(b = 12)),
+      axis.title = ggplot2::element_text(size = 20),
+      axis.title.x = ggplot2::element_text(margin = ggplot2::margin(t = 10)),
+      axis.title.y = ggplot2::element_text(margin = ggplot2::margin(r = 10)),
+      axis.text = ggplot2::element_text(size = 18, color = "black"),
+      axis.line = ggplot2::element_line(color = "black", linewidth = 0.8),
+      axis.ticks = ggplot2::element_line(color = "black", linewidth = 0.7),
+      axis.ticks.length = ggplot2::unit(0.2, "cm"),
+      plot.margin = ggplot2::margin(14, 18, 10, 14)
+    )
+
+  count_plot <- ggplot2::ggplot(df, ggplot2::aes(fiscal_year, online_count, group = 1)) +
+    ggplot2::geom_line(linewidth = 1.6, color = "#7570b3") +
+    ggplot2::geom_point(size = 4.5, color = "#7570b3") +
     ggplot2::scale_x_continuous(breaks = sort(unique(df$fiscal_year))) +
     ggplot2::scale_y_continuous(labels = function(x) format(x, big.mark = ",", scientific = FALSE)) +
     ggplot2::labs(
-      title = "Figure 1A. ICT 算定回数（2022–2024）",
+      title = "ICT 算定回数（2022–2024）",
       x = "年度",
-      y = "算定回数",
-      color = NULL
+      y = "算定回数"
     ) +
-    ggplot2::theme_bw(base_size = 11) +
-    ggplot2::theme(legend.position = "bottom")
+    slide_theme
 
-  pct_plot <- ggplot2::ggplot(df, ggplot2::aes(fiscal_year, proportion_pct, color = series, group = series)) +
-    ggplot2::geom_line(linewidth = 0.9) +
-    ggplot2::geom_point(size = 2.5) +
-    ggplot2::scale_color_brewer(palette = "Dark2") +
-    ggplot2::scale_x_continuous(breaks = sort(unique(df$fiscal_year))) +
-    ggplot2::labs(
-      title = "Figure 1B. ICT 利用割合（2022–2024）",
-      subtitle = "初診: ICT 初診 / 全初診、再診・外来: ICT 再診・外来 / 全再診・外来",
-      x = "年度",
-      y = "割合（%）",
-      color = NULL
+  pct_plot <- ggplot2::ggplot(df, ggplot2::aes(fiscal_year, proportion_pct, group = 1)) +
+    ggplot2::geom_line(linewidth = 1.6, color = "#7570b3") +
+    ggplot2::geom_point(size = 4.5, color = "#7570b3") +
+    ggplot2::geom_text(
+      ggplot2::aes(y = 10, label = sprintf("%.2f%%", proportion_pct)),
+      size = 5.5,
+      color = "#333333",
+      fontface = "bold"
     ) +
-    ggplot2::theme_bw(base_size = 11) +
-    ggplot2::theme(legend.position = "bottom")
+    ggplot2::scale_x_continuous(
+      breaks = sort(unique(df$fiscal_year)),
+      expand = ggplot2::expansion(mult = c(0.2, 0.2))
+    ) +
+    ggplot2::scale_y_continuous(
+      breaks = seq(0, 100, by = 20),
+      expand = ggplot2::expansion(mult = c(0.02, 0.02))
+    ) +
+    ggplot2::coord_cartesian(ylim = c(0, 100), clip = "off") +
+    ggplot2::labs(
+      title = "ICT 利用割合（2022–2024）",
+      x = "年度",
+      y = "割合（%）"
+    ) +
+    slide_theme
 
   if (requireNamespace("patchwork", quietly = TRUE)) {
-    return(patchwork::wrap_plots(count_plot, pct_plot, ncol = 1) + patchwork::plot_layout(guides = "collect"))
+    return(patchwork::wrap_plots(count_plot, pct_plot, ncol = 1))
   }
 
   list(count = count_plot, proportion = pct_plot)
@@ -207,21 +232,19 @@ plot_figure2_age_by_visit <- function(cells, codes_cfg) {
 
   ggplot2::ggplot(
     df,
-    ggplot2::aes(age_group, proportion_pct, color = visit_type_label, group = visit_type_label)
+    ggplot2::aes(age_group, proportion_pct, group = 1)
   ) +
-    ggplot2::geom_line(linewidth = 0.8) +
-    ggplot2::geom_point(size = 1.8) +
+    ggplot2::geom_line(linewidth = 0.8, color = "#7570b3") +
+    ggplot2::geom_point(size = 1.8, color = "#7570b3") +
     ggplot2::facet_wrap(~ fiscal_year, nrow = 1) +
-    ggplot2::scale_color_manual(values = c("#1b9e77", "#d95f02")) +
     ggplot2::labs(
-      title = "Figure 2. 年齢階級別オンライン診療割合（初診 vs 再診・外来）",
+      title = "Figure 2. 年齢階級別オンライン診療割合",
+      subtitle = "初診・再診・外来を合算（2022–2024）",
       x = "年齢階級",
-      y = "割合（%）",
-      color = NULL
+      y = "割合（%）"
     ) +
     ggplot2::theme_bw(base_size = 10) +
     ggplot2::theme(
-      legend.position = "bottom",
       axis.text.x = ggplot2::element_text(angle = 90, hjust = 1, vjust = 0.5, size = 7)
     )
 }
@@ -232,18 +255,17 @@ plot_figure3_age_stratified <- function(cells, codes_cfg) {
 
   ggplot2::ggplot(
     df,
-    ggplot2::aes(age_group, proportion_pct, color = visit_type_label, group = visit_type_label)
+    ggplot2::aes(age_group, proportion_pct, color = fiscal_year, group = fiscal_year)
   ) +
     ggplot2::geom_line(linewidth = 0.8) +
     ggplot2::geom_point(size = 1.8) +
-    ggplot2::facet_wrap(~ fiscal_year, nrow = 1) +
-    ggplot2::scale_color_manual(values = c("#7570b3", "#e7298a")) +
+    ggplot2::scale_color_brewer(palette = "Dark2") +
     ggplot2::labs(
-      title = "Figure 3A. 年齢階級別オンライン診療割合（性別集計）",
-      subtitle = "男女を合算した年齢階級別の割合（2022–2024）",
+      title = "Figure 3A. 年齢階級別オンライン診療割合（年度比較）",
+      subtitle = "初診・再診・外来を合算。男女合算の年齢階級別割合",
       x = "年齢階級",
       y = "割合（%）",
-      color = NULL
+      color = "年度"
     ) +
     ggplot2::theme_bw(base_size = 10) +
     ggplot2::theme(
@@ -258,17 +280,16 @@ plot_figure3_sex_stratified <- function(cells) {
 
   ggplot2::ggplot(
     df,
-    ggplot2::aes(sex_label, proportion_pct, fill = visit_type_label)
+    ggplot2::aes(sex_label, proportion_pct, fill = fiscal_year)
   ) +
     ggplot2::geom_col(position = ggplot2::position_dodge(width = 0.8), width = 0.7) +
-    ggplot2::facet_wrap(~ fiscal_year, nrow = 1) +
-    ggplot2::scale_fill_manual(values = c("#1b9e77", "#d95f02")) +
+    ggplot2::scale_fill_brewer(palette = "Dark2") +
     ggplot2::labs(
-      title = "Figure 3B. 性別オンライン診療割合（年齢集計）",
-      subtitle = "全年齢を合算した性別の割合（2022–2024）",
+      title = "Figure 3B. 性別オンライン診療割合",
+      subtitle = "初診・再診・外来を合算。全年齢合算（2022–2024）",
       x = "性別",
       y = "割合（%）",
-      fill = NULL
+      fill = "年度"
     ) +
     ggplot2::theme_bw(base_size = 10) +
     ggplot2::theme(legend.position = "bottom")
@@ -277,29 +298,26 @@ plot_figure3_sex_stratified <- function(cells) {
 plot_figure4_change_by_age <- function(change, codes_cfg) {
   require_ggplot2()
   df <- prepare_change_plot_data(change, codes_cfg)
-  visit_colors <- c("初診" = "#1b9e77", "再診・外来" = "#d95f02")
 
-  ggplot2::ggplot(df, ggplot2::aes(abs_change_pp, age_group, color = visit_type_label)) +
+  ggplot2::ggplot(df, ggplot2::aes(abs_change_pp, age_group)) +
     ggplot2::geom_vline(xintercept = 0, color = "#cccccc", linewidth = 0.35) +
     ggplot2::geom_segment(
       ggplot2::aes(x = 0, xend = abs_change_pp, yend = age_group),
-      linewidth = 0.7
+      linewidth = 0.7,
+      color = "#7570b3"
     ) +
-    ggplot2::geom_point(size = 2.2) +
-    ggplot2::facet_wrap(~ visit_type_label, ncol = 2, scales = "free_x") +
-    ggplot2::scale_color_manual(values = visit_colors, guide = "none") +
+    ggplot2::geom_point(size = 2.2, color = "#7570b3") +
     ggplot2::coord_flip() +
     ggplot2::labs(
       title = "Figure 4. Age-specific change from 2022 to 2024",
-      subtitle = "絶対差 p2024 − p2022（percentage points）。初診と再診・外来を年齢階級別に比較",
+      subtitle = "絶対差 p2024 − p2022（percentage points）。初診・再診・外来を合算",
       x = "変化量（pp）",
       y = NULL
     ) +
     ggplot2::theme_bw(base_size = 10) +
     ggplot2::theme(
       panel.grid.major.y = ggplot2::element_blank(),
-      axis.text.y = ggplot2::element_text(size = 8),
-      strip.text = ggplot2::element_text(face = "bold")
+      axis.text.y = ggplot2::element_text(size = 8)
     )
 }
 
@@ -309,17 +327,18 @@ plot_figure3_age_sex <- function(cells, codes_cfg) {
 
   ggplot2::ggplot(
     df,
-    ggplot2::aes(age_group, proportion_pct, color = visit_type_label, group = visit_type_label)
+    ggplot2::aes(age_group, proportion_pct, color = fiscal_year, group = fiscal_year)
   ) +
     ggplot2::geom_line(linewidth = 0.8) +
     ggplot2::geom_point(size = 1.8) +
-    ggplot2::facet_grid(sex_label ~ fiscal_year) +
-    ggplot2::scale_color_manual(values = c("#7570b3", "#e7298a")) +
+    ggplot2::facet_wrap(~ sex_label, nrow = 1) +
+    ggplot2::scale_color_brewer(palette = "Dark2") +
     ggplot2::labs(
       title = "Figure 3. 年齢・性別別オンライン診療割合",
+      subtitle = "初診・再診・外来を合算",
       x = "年齢階級",
       y = "割合（%）",
-      color = NULL
+      color = "年度"
     ) +
     ggplot2::theme_bw(base_size = 10) +
     ggplot2::theme(
@@ -328,14 +347,14 @@ plot_figure3_age_sex <- function(cells, codes_cfg) {
     )
 }
 
-save_figure <- function(plot, filename, root = project_root(), width = 10, height = 6) {
+save_figure <- function(plot, filename, root = project_root(), width = 10, height = 6, dpi = 150) {
   require_ggplot2()
   out_dir <- path_from_root("output", "figures", root = root)
   if (!dir.exists(out_dir)) {
     dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
   }
   out_path <- file.path(out_dir, filename)
-  ggplot2::ggsave(out_path, plot = plot, width = width, height = height, dpi = 150)
+  ggplot2::ggsave(out_path, plot = plot, width = width, height = height, dpi = dpi)
   message("[save] ", out_path)
   invisible(out_path)
 }

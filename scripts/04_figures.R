@@ -9,6 +9,7 @@ for (f in c("codes.R", "aggregate.R", "figures.R")) {
 
 tables_dir <- path_from_root("output", "tables", root = PROJECT_ROOT)
 trend_path <- file.path(tables_dir, "national_trend.csv")
+cells_pooled_path <- file.path(tables_dir, "main_analysis_cells_pooled.csv")
 cells_path <- file.path(tables_dir, "main_analysis_cells.csv")
 change_path <- file.path(tables_dir, "change_2022_2024_by_age.csv")
 
@@ -18,7 +19,11 @@ if (!file.exists(trend_path) || !file.exists(cells_path) || !file.exists(change_
 
 codes_cfg <- load_procedure_codes(PROJECT_ROOT)
 trend <- utils::read.csv(trend_path, fileEncoding = "UTF-8")
-cells <- utils::read.csv(cells_path, fileEncoding = "UTF-8")
+cells <- if (file.exists(cells_pooled_path)) {
+  utils::read.csv(cells_pooled_path, fileEncoding = "UTF-8")
+} else {
+  utils::read.csv(cells_path, fileEncoding = "UTF-8")
+}
 change <- utils::read.csv(change_path, fileEncoding = "UTF-8")
 
 fig1 <- plot_figure1_trend(trend)
@@ -33,13 +38,13 @@ if (inherits(fig1, "list")) {
   save_figure(fig1$count, "figure1a_ict_counts.png", root = PROJECT_ROOT, width = 9, height = 4.5)
   save_figure(fig1$proportion, "figure1b_ict_proportions.png", root = PROJECT_ROOT, width = 9, height = 4.5)
 } else {
-  save_figure(fig1, "figure1_trend.png", root = PROJECT_ROOT, width = 9, height = 8)
+  save_figure(fig1, "figure1_trend.png", root = PROJECT_ROOT, width = 6, height = 8, dpi = 200)
 }
 
 save_figure(fig2, "figure2_age_by_visit_type.png", root = PROJECT_ROOT, width = 12, height = 5)
-save_figure(fig3a, "figure3a_age_stratified.png", root = PROJECT_ROOT, width = 12, height = 5)
-save_figure(fig3b, "figure3b_sex_stratified.png", root = PROJECT_ROOT, width = 10, height = 5)
-save_figure(fig4, "figure4_change_by_age.png", root = PROJECT_ROOT, width = 12, height = 8)
+save_figure(fig3a, "figure3a_age_stratified.png", root = PROJECT_ROOT, width = 10, height = 5)
+save_figure(fig3b, "figure3b_sex_stratified.png", root = PROJECT_ROOT, width = 8, height = 5)
+save_figure(fig4, "figure4_change_by_age.png", root = PROJECT_ROOT, width = 10, height = 5.5)
 save_figure(fig_policy, "supplementary_policy_timeline.png", root = PROJECT_ROOT, width = 10, height = 4)
 if (!is.null(fig_legacy)) {
   save_figure(fig_legacy, "supplementary_legacy_trend.png", root = PROJECT_ROOT, width = 8, height = 5)

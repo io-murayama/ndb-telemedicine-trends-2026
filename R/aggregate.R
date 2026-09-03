@@ -28,11 +28,13 @@ aggregate_national_trend <- function(df) {
 
   ict <- df[df$era == "ict", , drop = FALSE]
   if (nrow(ict) > 0L) {
-    for (vt in c("initial", "followup")) {
+    for (vt in c("initial", "followup", "all")) {
       if (vt == "initial") {
         scope <- ict[ict$visit_type == "initial", , drop = FALSE]
-      } else {
+      } else if (vt == "followup") {
         scope <- ict[ict$visit_type %in% c("followup", "outpatient"), , drop = FALSE]
+      } else {
+        scope <- ict[ict$visit_type %in% c("initial", "followup", "outpatient"), , drop = FALSE]
       }
 
       online <- aggregate(
@@ -58,6 +60,25 @@ aggregate_national_trend <- function(df) {
   }
 
   do.call(rbind, pieces)
+}
+
+#' Pool initial + follow-up cells into a single visit_type = "all".
+pool_visit_types_cells <- function(cells) {
+  online <- aggregate(
+    online_count ~ fiscal_year + sex + age_group,
+    data = cells,
+    FUN = function(x) sum(x, na.rm = TRUE)
+  )
+  denom <- aggregate(
+    denominator_count ~ fiscal_year + sex + age_group,
+    data = cells,
+    FUN = function(x) sum(x, na.rm = TRUE)
+  )
+  merged <- merge(online, denom, by = c("fiscal_year", "sex", "age_group"), all = TRUE)
+  merged$visit_type <- "all"
+  merged$online_count[is.na(merged$online_count)] <- 0
+  merged$proportion <- merged$online_count / merged$denominator_count
+  merged
 }
 
 aggregate_main_cells <- function(df, codes_cfg) {
