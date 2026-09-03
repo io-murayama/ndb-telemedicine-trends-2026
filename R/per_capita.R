@@ -1,5 +1,20 @@
 #' Prefecture-level per-capita ICT utilization (SAP secondary analysis).
 
+PREFECTURE_VISIT_SCOPES <- list(
+  initial = list(
+    label = "初診",
+    metrics = c("online_initial")
+  ),
+  followup = list(
+    label = "再診・外来",
+    metrics = c("online_followup", "online_outpatient")
+  ),
+  total = list(
+    label = "合計",
+    metrics = c("online_initial", "online_followup", "online_outpatient")
+  )
+)
+
 safe_sum_counts <- function(x) {
   if (length(x) == 0L || all(is.na(x))) {
     return(NA_real_)
@@ -10,8 +25,11 @@ safe_sum_counts <- function(x) {
   sum(x)
 }
 
-aggregate_prefecture_online <- function(cross_df) {
-  online <- cross_df[cross_df$metric_type %in% c("online_initial", "online_followup", "online_outpatient"), , drop = FALSE]
+aggregate_prefecture_online <- function(cross_df, metric_types = NULL) {
+  if (is.null(metric_types)) {
+    metric_types <- PREFECTURE_VISIT_SCOPES$total$metrics
+  }
+  online <- cross_df[cross_df$metric_type %in% metric_types, , drop = FALSE]
   aggregate(
     count ~ fiscal_year + prefecture_code + prefecture_name,
     data = online,
@@ -19,8 +37,12 @@ aggregate_prefecture_online <- function(cross_df) {
   )
 }
 
-prepare_per_capita_table <- function(cross_df, pop_df, per = 100000) {
-  online <- aggregate_prefecture_online(cross_df)
+prepare_per_capita_table <- function(cross_df, pop_df, per = 100000, visit_scope = "total") {
+  scope <- PREFECTURE_VISIT_SCOPES[[visit_scope]]
+  if (is.null(scope)) {
+    stop("Unknown visit_scope: ", visit_scope, call. = FALSE)
+  }
+  online <- aggregate_prefecture_online(cross_df, metric_types = scope$metrics)
   names(online)[ncol(online)] <- "online_count"
 
   merged <- merge(
@@ -37,7 +59,16 @@ prepare_per_capita_table <- function(cross_df, pop_df, per = 100000) {
   )
   merged$rate_per_population_pct <- merged$rate_per_population / 1000
   merged$rate_denominator_label <- paste0("per ", format(per, big.mark = ","))
+  merged$visit_scope <- visit_scope
+  merged$visit_scope_label <- scope$label
   merged
+}
+
+prepare_all_prefecture_per_capita <- function(cross_df, pop_df, per = 100000) {
+  pieces <- lapply(names(PREFECTURE_VISIT_SCOPES), function(scope) {
+    prepare_per_capita_table(cross_df, pop_df, per = per, visit_scope = scope)
+  })
+  do.call(rbind, pieces)
 }
 
 save_per_capita_table <- function(df, filename = "prefecture_per_capita.csv", root = project_root()) {
@@ -49,4 +80,52 @@ save_per_capita_table <- function(df, filename = "prefecture_per_capita.csv", ro
   utils::write.csv(df, out_path, row.names = FALSE, fileEncoding = "UTF-8")
   message("[save] ", out_path)
   invisible(out_path)
+}
+
+aggregate_prefecture_change_2022_2024 <- function(per_capita_df, baseline_year = 2022, end_year = 2024) {
+  scopes <- unique(per_capita_df$visit_scope)
+  pieces <- lapply(scopes, function(scope) {
+    scope_df <- per_capita_df[per_capita_df$visit_scope == scope, , drop = FALSE]
+    aggregate_prefecture_change_scope(scope_df, baseline_year = baseline_year, end_year = end_year)
+  })
+  do.call(rbind, pieces)
+}
+
+aggregate_prefecture_change_scope <- function(per_capita_df, baseline_year = 2022, end_year = 2024) {
+  base <- per_capita_df[per_capita_df$fiscal_year == baseline_year, , drop = FALSE]
+  end <- per_capita_df[per_capita_df$fiscal_year == end_year, , drop = FALSE]
+  if (nrow(base) == 0L || nrow(end) == 0L) {
+    stop(
+      "Missing fiscal years for prefecture change calculation: ",
+      baseline_year,
+      ", ",
+      end_year,
+      call. = FALSE
+    )
+  }
+
+  rate_base <- paste0("rate_per_population.", baseline_year)
+  rate_end <- paste0("rate_per_population.", end_year)
+  merged <- merge(
+    base[, c("prefecture_code", "prefecture_name", "rate_per_population", "online_count", "population"), drop = FALSE],
+    end[, c("prefecture_code", "rate_per_population", "online_count", "population"), drop = FALSE],
+    by = "prefecture_code",
+    suffixes = c(paste0(".", baseline_year), paste0(".", end_year))
+  )
+
+  merged$rate_baseline <- merged[[rate_base]]
+  merged$rate_end <- merged[[rate_end]]
+  merged$abs_change <- merged$rate_end - merged$rate_baseline
+  merged$relative_change_pct <- ifelse(
+    is.na(merged$rate_baseline) | merged$rate_baseline <= 0,
+    NA_real_,
+    (merged$rate_end / merged$rate_baseline - 1) * 100
+  )
+  merged$baseline_year <- baseline_year
+  merged$end_year <- end_year
+  if ("visit_scope" %in% names(per_capita_df)) {
+    merged$visit_scope <- per_capita_df$visit_scope[1]
+    merged$visit_scope_label <- per_capita_df$visit_scope_label[1]
+  }
+  order_prefectures_north_to_south(merged)
 }

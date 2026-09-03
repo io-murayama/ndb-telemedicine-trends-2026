@@ -253,11 +253,17 @@ knitr::kable(
 
 ![Supplementary Figure D. 都道府県別人口あたり（2024、地図）](../output/figures/supplementary_prefecture_per_capita_map_2024.png)
 
+![Supplementary Figure E. 都道府県別人口あたりの変化（2022→2024）](../output/figures/supplementary_prefecture_per_capita_change_2022_2024.png)
+
+![Supplementary Figure F. 都道府県別人口あたりの変化率（2022→2024、地図）](../output/figures/supplementary_prefecture_per_capita_change_map_2022_2024.png)
+
 #### 解釈
 
 - **医療機関所在地** に基づく都道府県別の **人口あたり ICT 算定回数**（10万人あたり、2024 年度）。
 - 棒グラフ（Figure C）は都道府県を **北から南**（JIS コード順）に並べる。
-- 地図（Figure D）は `data/reference/prefectures.geojson`（[dataofjapan/land](https://github.com/dataofjapan/land)）を用いた choropleth。**色は log10 スケール**（東京都の外れ値を抑えて地域差を可視化）。
+- 地図（Figure D）は `data/reference/prefectures.geojson`（[dataofjapan/land](https://github.com/dataofjapan/land)）を用いた choropleth。**初診・再診・外来・合計** の3パネル（Figure 4 と同色）。合計パネルのみ log10 スケール。
+- **Supplementary Figure E** は、2022→2024 の人口あたり算定回数の **絶対差**（10万人あたり）を、**初診・再診・外来・合計** の3パネルでロリポップ表示（Figure 4 と同色: 初診 `#1b9e77`、再診・外来 `#d95f02`、合計 `#7570b3`）。
+- **Supplementary Figure F** は、同じ期間の **相対変化率（%）** を地図 heatmap で **3パネル** 表示（Figure 4 と同色）。凡例は −50～200% でクリップ。
 - 分母は **総務省統計局人口推計**（都道府県別総人口）。`data/reference/prefecture_population.csv` を参照。
 - **地域の人口規模を考慮した利用率** として解釈できる。ただし医療機関所在地と患者居住地は一致しない場合がある（SAP 6）。
 
@@ -295,6 +301,7 @@ knitr::kable(
 | モデル | `output/tables/model_fixed_effects.csv` |
 | 増加率 | `output/tables/change_2022_2024_by_age.csv` |
 | 都道府県（人口あたり） | `output/tables/prefecture_per_capita.csv` |
+| 都道府県（2022→2024 変化） | `output/tables/prefecture_per_capita_change_2022_2024.csv` |
 | Figure 1–4 | `output/figures/figure*.png` |
 | Supp Fig A–D | `output/figures/supplementary_*.png` |
 
