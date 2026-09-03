@@ -64,10 +64,9 @@ fmt_n <- function(x) format(x, big.mark = ",", scientific = FALSE)
 
 - **デザイン**: 2022～2024 年度の全国反復横断研究（集計データ）
 - **データ**: NDB オープンデータ（医科・初再診料・クロス集計）
-- **主アウトカム**: 外来診療に占めるオンライン診療の割合
-  - **初診**: ICT 初診算定回数 / 全初診算定回数
-  - **再診**: ICT 再診・外来算定回数 / 全再診・外来算定回数
-- **主解析（2022～2024）**: 集計セルを単位とした **binomial regression**（log link → risk ratio）
+- **主アウトカム**: 外来診療に占めるオンライン診療の割合（**初診・再診・外来を合算**）
+  - ICT 算定回数 / 全初診・再診・外来算定回数
+- **主解析（2022～2024）**: 集計セルを単位とした **binomial regression**（log link → risk ratio；モデルは初再診別を含む）
 - **副次解析**: 都道府県別 **人口あたり ICT 算定回数**（10万人あたり、総務省人口推計を分母）
 
 ---
@@ -78,14 +77,22 @@ fmt_n <- function(x) format(x, big.mark = ",", scientific = FALSE)
 
 ```{r trend-table}
 trend <- read_tab("national_trend.csv")
-ict_trend <- trend[trend$era == "ict" & trend$visit_type %in% c("initial", "followup"), ]
-ict_trend$series <- ifelse(ict_trend$visit_type == "initial", "初診（ICT）", "再診・外来（ICT）")
+ict_trend <- trend[trend$era == "ict" & trend$visit_type == "all", ]
+if (nrow(ict_trend) == 0L) {
+  split <- trend[trend$era == "ict" & trend$visit_type %in% c("initial", "followup"), ]
+  ict_trend <- aggregate(
+    cbind(online_count, denominator_count) ~ fiscal_year,
+    data = split,
+    FUN = sum
+  )
+  ict_trend$proportion <- ict_trend$online_count / ict_trend$denominator_count
+}
 ict_trend$割合 <- fmt_pct(ict_trend$proportion, 4)
 ict_trend$算定回数 <- fmt_n(ict_trend$online_count)
 knitr::kable(
-  ict_trend[, c("fiscal_year", "series", "算定回数", "割合")],
-  col.names = c("年度", "系列", "ICT 算定回数", "割合"),
-  caption = "表1. 全国 ICT 利用の経年推移（2022–2024）"
+  ict_trend[, c("fiscal_year", "算定回数", "割合")],
+  col.names = c("年度", "ICT 算定回数", "割合"),
+  caption = "表1. 全国 ICT 利用の経年推移（初診・再診・外来合算、2022–2024）"
 )
 ```
 
@@ -93,11 +100,10 @@ knitr::kable(
 
 #### 解釈
 
-**2022～2024 年度（ICT 時代）**
+**2022～2024 年度（ICT 時代、初診・再診・外来合算）**
 
-- **初診**の ICT 算定回数は **38.8 万 → 46.5 万 → 74.5 万** と増加し、割合は **0.17% → 0.18% → 0.29%**。
-- **再診・外来**も **55.7 万 → 68.6 万 → 113.5 万** と増加、割合は **0.05% → 0.06% → 0.09%**。
-- **初診の割合は再診・外来を一貫して上回る**（2024 年: 0.29% vs 0.09%）。
+- ICT 算定回数は **約 94.5 万 → 115.1 万 → 188.0 万** と増加。
+- 全初診・再診・外来に占める割合は **約 0.07% → 0.08% → 0.13%**。依然として 1% 未満。
 
 ### 3.1a 補足：制度変更 timeline と旧オンライン診療料
 
@@ -125,66 +131,75 @@ if (nrow(legacy_trend) > 0) {
 
 ---
 
-### 3.2 年齢・初再診別（Figure 2）
+### 3.2 年齢別（Figure 2）
 
-![Figure 2. 年齢階級別オンライン診療割合（初診 vs 再診・外来）](../output/figures/figure2_age_by_visit_type.png)
+![Figure 2. 年齢階級別オンライン診療割合](../output/figures/figure2_age_by_visit_type.png)
 
 ```{r age-2024}
-cells <- read_tab("main_analysis_cells.csv")
-age2024 <- aggregate(
-  proportion ~ age_group + visit_type,
-  data = cells[cells$fiscal_year == 2024, ],
-  FUN = mean
-)
+cells_path <- file.path(tab_dir, "main_analysis_cells_pooled.csv")
+if (!file.exists(cells_path)) {
+  cells_path <- file.path(tab_dir, "main_analysis_cells.csv")
+}
+cells <- read.csv(cells_path, fileEncoding = "UTF-8")
+if (!all(cells$visit_type == "all")) {
+  online <- aggregate(online_count ~ age_group, data = cells[cells$fiscal_year == 2024, ], sum)
+  denom <- aggregate(denominator_count ~ age_group, data = cells[cells$fiscal_year == 2024, ], sum)
+  age2024 <- merge(online, denom, by = "age_group")
+  age2024$proportion <- age2024$online_count / age2024$denominator_count
+} else {
+  age2024 <- aggregate(
+    cbind(online_count, denominator_count) ~ age_group,
+    data = cells[cells$fiscal_year == 2024, ],
+    FUN = sum
+  )
+  age2024$proportion <- age2024$online_count / age2024$denominator_count
+}
 age2024$割合 <- fmt_pct(age2024$proportion, 3)
-age2024$種別 <- ifelse(age2024$visit_type == "initial", "初診", "再診・外来")
 knitr::kable(
-  age2024[order(age2024$age_group), c("age_group", "種別", "割合")],
-  col.names = c("年齢階級", "種別", "割合（2024）"),
-  caption = "表2. 2024 年度の年齢階級別割合（参考）"
+  age2024[order(age2024$age_group), c("age_group", "割合")],
+  col.names = c("年齢階級", "割合（2024）"),
+  caption = "表2. 2024 年度の年齢階級別割合（初診・再診・外来合算）"
 )
 ```
 
 #### 解釈
 
-- **初診・再診ともに、若年層（とくに 0～4 歳、20～30 代）で割合が相対的に高い** 傾向。2024 年初診では 0～4 歳で約 **1.15%**、25～29 歳で約 **0.58%**。
-- **高齢ほど割合は低下**し、70 歳以上では初診 **0.03% 未満** となる年齢階級もある。デジタルアクセスや受診形態の差が反映されている可能性がある。
+- **若年層（とくに 0～4 歳、20～30 代）で割合が相対的に高い** 傾向。
+- **高齢ほど割合は低下**する。デジタルアクセスや受診形態の差が反映されている可能性がある。
 - **3 年間（2022～2024）を通じて全体的に上昇**しており、制度開始初期から利用が広がりつつある。
-- 初診と再診・外来の **パターンの形は類似**（若年高・高齢低）だが、初診の方が水準が高い。
 
 ---
 
 ### 3.3 年齢別・性別別（Figure 3A / 3B）
 
-![Figure 3A. 年齢階級別（性別集計）](../output/figures/figure3a_age_stratified.png)
+![Figure 3A. 年齢階級別（年度比較）](../output/figures/figure3a_age_stratified.png)
 
 ![Figure 3B. 性別（年齢集計）](../output/figures/figure3b_sex_stratified.png)
 
 #### 解釈
 
-- **年齢別（Figure 3A）**: 性別を合算すると、若年層で割合が高く高齢ほど低下するパターンが明確。Figure 2 と同型だが、男女を統合した全体傾向を示す。
-- **性別別（Figure 3B）**: 全年齢を合算すると、**女性の方が男性より ICT 利用割合がやや高い** 傾向（とくに初診）。差の大きさはモデル結果（表3）で確認。
+- **年齢別（Figure 3A）**: 年度を重ねて比較すると、若年層で割合が高く高齢ほど低下するパターンが各年で共通し、水準は年々上昇。
+- **性別別（Figure 3B）**: 全年齢を合算すると、**女性の方が男性より ICT 利用割合がやや高い** 傾向。差の大きさはモデル結果（表3）で確認。
 
 ---
 
 ### 3.3a 年齢別の普及（Figure 4）
 
-![Figure 4. 年齢階級別変化（2022→2024、初診・再診・外来）](../output/figures/figure4_change_by_age.png)
+![Figure 4. 年齢階級別変化（2022→2024）](../output/figures/figure4_change_by_age.png)
 
 ```{r change-table}
 change <- read_tab("change_2022_2024_by_age.csv")
 change$絶対差 <- sprintf("%.3f pp", change$abs_change_pp)
-change$種別 <- ifelse(change$visit_type == "initial", "初診", "再診・外来")
 knitr::kable(
-  change[order(change$age_group), c("age_group", "種別", "絶対差")],
-  col.names = c("年齢階級", "種別", "p2024 − p2022（pp）"),
-  caption = "表2a. 年齢階級別の絶対変化（2022→2024）"
+  change[order(change$age_group), c("age_group", "絶対差")],
+  col.names = c("年齢階級", "p2024 − p2022（pp）"),
+  caption = "表2a. 年齢階級別の絶対変化（初診・再診・外来合算、2022→2024）"
 )
 ```
 
 #### 解釈
 
-- **Figure 4** は、年齢階級ごとの **絶対差** $p_{2024} - p_{2022}$（percentage points）をロリポップチャートで示し、「**誰に普及したか**」を初診・再診・外来のパネルで比較する（色は Figure 2 と統一）。
+- **Figure 4** は、年齢階級ごとの **絶対差** $p_{2024} - p_{2022}$（percentage points）をロリポップチャートで示し、「**誰に普及したか**」を示す。
 - **若年層（とくに 0～4 歳、20～30 代）で絶対差が大きい** 傾向。高齢層でも増加はあるが、水準・増分ともに小さい。
 
 ---
@@ -273,8 +288,8 @@ knitr::kable(
 
 ### Clinical Question への回答
 
-1. **2022～2024 年の変化**: ICT 初診・再診・外来の利用割合は **年度とともに増加**。2024 年時点で初診 **0.29%**、再診・外来 **0.09%** 程度。
-2. **利用パターン**: **初診 > 再診**、**若年 > 高齢**、**女性 ≥ 男性（差は小）**、**年度とともに増加**。年齢差は初診・再診で同方向。
+1. **2022～2024 年の変化**: ICT 利用割合（初診・再診・外来合算）は **年度とともに増加**。2024 年時点で全外来比 **約 0.13%**。
+2. **利用パターン**: **若年 > 高齢**、**女性 ≥ 男性（差は小）**、**年度とともに増加**。
 
 ### Limitation（SAP 8 より）
 
@@ -298,6 +313,7 @@ knitr::kable(
 |------|------|
 | トレンド | `output/tables/national_trend.csv` |
 | 主解析セル | `output/tables/main_analysis_cells.csv` |
+| 主解析セル（合算） | `output/tables/main_analysis_cells_pooled.csv` |
 | モデル | `output/tables/model_fixed_effects.csv` |
 | 増加率 | `output/tables/change_2022_2024_by_age.csv` |
 | 都道府県（人口あたり） | `output/tables/prefecture_per_capita.csv` |
