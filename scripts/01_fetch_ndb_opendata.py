@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import argparse
 import re
 import shutil
 import sys
@@ -33,7 +34,7 @@ FILE_SPECS = [
     ("basic_initial_followup_sma.xlsx", "初再診料_二次医療圏別算定回数"),
 ]
 
-NDB11_ZIP = "https://www.mhlw.go.jp/content/12400000/001742573.zip"
+NDB11_ZIP = "https://www.mhlw.go.jp/content/12400000/001742574.zip"
 
 
 def fetch_html(page_id: str) -> str:
@@ -64,7 +65,7 @@ def download(url: str, dest: Path) -> None:
 def decode_zip_name(name: str) -> str:
     try:
         return name.encode("cp437").decode("cp932")
-    except Exception:
+    except (UnicodeEncodeError, UnicodeDecodeError):
         return name
 
 
@@ -152,6 +153,16 @@ def write_readme(folder: str, round_no: int, fiscal_year: int, source_url: str) 
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--round",
+        choices=[*ROUNDS, "ndb11_2024"],
+        action="append",
+        dest="selected_rounds",
+        help="download only the specified round (may be supplied more than once)",
+    )
+    args = parser.parse_args()
+    selected = set(args.selected_rounds or [*ROUNDS, "ndb11_2024"])
     RAW.mkdir(parents=True, exist_ok=True)
     meta = {
         "ndb06_2019": (6, 2019),
@@ -165,6 +176,8 @@ def main() -> int:
     errors: list[str] = []
 
     for folder, page_id in ROUNDS.items():
+        if folder not in selected:
+            continue
         round_no, fiscal_year = meta[folder]
         source = f"https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/0000177221_{page_id}.html"
         print(f"[{folder}]")
@@ -173,16 +186,17 @@ def main() -> int:
         if missing:
             errors.append(f"{folder}: missing {', '.join(missing)}")
 
-    print("[ndb11_2024]")
-    missing11 = fetch_ndb11()
-    write_readme(
-        "ndb11_2024",
-        11,
-        2024,
-        "https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/0000177221_00017.html",
-    )
-    if missing11:
-        errors.append(f"ndb11_2024: missing {', '.join(missing11)}")
+    if "ndb11_2024" in selected:
+        print("[ndb11_2024]")
+        missing11 = fetch_ndb11()
+        write_readme(
+            "ndb11_2024",
+            11,
+            2024,
+            "https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/0000177221_00017.html",
+        )
+        if missing11:
+            errors.append(f"ndb11_2024: missing {', '.join(missing11)}")
 
     if errors:
         print("\nWarnings:")

@@ -1,0 +1,71 @@
+<html><head><meta charset='utf-8'><title>患者側地域分布</title><style>body{max-width:1000px;margin:32px auto;font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans',sans-serif;line-height:1.65}img{max-width:100%;height:auto}code{background:#f4f4f4;padding:2px 4px}table{border-collapse:collapse;margin:1em 0}th,td{border:1px solid #ccc;padding:5px 8px}</style></head><body><h2>結論</h2>
+<p>通信利用動向調査の「オンライン診療の利用」は、医療機関所在地ベースのNDB指標とは別の地域像を与えた。両者の都道府県順位の年平均Spearman相関は <strong>0.37</strong> で、供給側の集中だけから自己申告利用を推測するのは難しい。公開中医協資料でも、情報通信機器を用いた初・再診料等の <strong>51.1%</strong> が患者と医療機関で異なる都道府県にまたがると報告されており、この解釈と整合する。表15は保険診療と自由診療を区別しないため、NDB保険診療の需要量や需給比を示す指標には使わない。</p>
+<p>都道府県別の自己申告率には標本誤差の問題が大きい。公表された集計人数と率からの目安では、都道府県×年セルの <strong>53.2%</strong> が「利用者10人未満」に相当する。このため、単年ランキングを主結果にせず、3年平均・年次の再現性・地方別結果を併記した。</p>
+<h2>データと定義</h2>
+<ul><li>自己申告の補助指標：総務省「通信利用動向調査」世帯構成員編・表15（2022–2024年）。質問対象は<strong>過去1年間にインターネットを利用した者</strong>であり、過去1年にオンライン診療を利用した割合（複数回答）。人口全体の利用率ではなく、<strong>保険診療と自由診療を区別しない</strong>。したがってNDB保険診療の需要・需給比には用いず、一般的なデジタル利用の補助指標としてのみ扱う。</li><li>デジタル接続：同じ調査の問1「過去1年間のインターネット利用経験（対象：全員）」。</li><li>供給側：このリポジトリに既存のNDBオープンデータ集計。都道府県は<strong>医療機関所在地</strong>で、年齢・性別で直接標準化した外来診療に占めるICT診療割合。</li><li>通信利用動向調査は暦年・過去1年の自己申告、NDBは年度の算定回数であり、対応年同士の比較も探索的である。</li></ul>
+<h3>全国値</h3>
+<table><thead><tr><th>調査年</th><th>表15の集計人数</th><th>オンライン診療利用率</th><th>インターネット利用率</th></tr></thead><tbody>
+<tr><td>2022</td><td>31844.0</td><td>1.8%</td><td>83.1%</td></tr>
+<tr><td>2023</td><td>27805.0</td><td>2.5%</td><td>83.4%</td></tr>
+<tr><td>2024</td><td>30286.0</td><td>2.5%</td><td>83.1%</td></tr>
+</tbody></table>
+<p>e-Stat表15の全国値は2022年1.8%、2023年2.5%、2024年2.5%だった。これは今回ダウンロードした公式CSVを直接読んだ値である。</p>
+<h2>結果</h2>
+<p><img src="../figures/figure4_patient_prefecture_map.png" alt="居住都道府県別・年次別の自己申告利用率（地図）"></p>
+<p>都道府県順位の年次間Spearman相関の平均は、患者側で <strong>0.34</strong>、供給側NDBで <strong>0.77</strong> だった。患者側の県別順位には偶然変動が大きいため、以下の乖離は仮説生成として扱う。</p>
+<h3>居住都道府県別の2022→2024年変化</h3>
+<p><img src="../figures/figure18_patient_location_change_map.png" alt="居住都道府県別の自己申告利用率の変化（地図）"></p>
+<p>利用率が1.5ポイント以上上昇した県は 9 県だった。ただし、公表標本数×公表率による利用者数目安が2022年・2024年とも10人以上なのは 1 県のみである。したがって、地図は増加候補を探すための記述であり、各県での真の増加の検定結果ではない。</p>
+<table><thead><tr><th>居住都道府県</th><th>2022年</th><th>2024年</th><th>変化</th><th>利用者数目安 2022</th><th>利用者数目安 2024</th><th>両端10人以上</th></tr></thead><tbody>
+<tr><td>宮城県</td><td>0.1%</td><td>3.0%</td><td>+2.9ポイント</td><td>0.7</td><td>19.9</td><td>いいえ</td></tr>
+<tr><td>兵庫県</td><td>1.3%</td><td>3.8%</td><td>+2.5ポイント</td><td>6.2</td><td>23.5</td><td>いいえ</td></tr>
+<tr><td>北海道</td><td>1.4%</td><td>3.4%</td><td>+2.0ポイント</td><td>9.1</td><td>15.9</td><td>いいえ</td></tr>
+<tr><td>滋賀県</td><td>0.9%</td><td>2.9%</td><td>+2.0ポイント</td><td>6.2</td><td>22.2</td><td>いいえ</td></tr>
+<tr><td>和歌山県</td><td>1.3%</td><td>3.3%</td><td>+2.0ポイント</td><td>8.0</td><td>16.7</td><td>いいえ</td></tr>
+<tr><td>神奈川県</td><td>2.0%</td><td>3.9%</td><td>+1.9ポイント</td><td>13.1</td><td>26.1</td><td>はい</td></tr>
+<tr><td>鳥取県</td><td>0.4%</td><td>2.1%</td><td>+1.7ポイント</td><td>2.5</td><td>12.5</td><td>いいえ</td></tr>
+<tr><td>沖縄県</td><td>1.9%</td><td>3.6%</td><td>+1.7ポイント</td><td>7.4</td><td>12.1</td><td>いいえ</td></tr>
+<tr><td>長野県</td><td>0.4%</td><td>2.0%</td><td>+1.6ポイント</td><td>3.1</td><td>13.7</td><td>いいえ</td></tr>
+</tbody></table>
+<p>この表・図の地域は回答者の居住都道府県である。保険診療と自由診療を分けない自己申告であり、NDBの患者住所地集計の代替ではない。</p>
+<p><img src="../figures/figure5_patient_region_trend.png" alt="地方別患者側利用率の推移"></p>
+<h3>地方別（3年平均）</h3>
+<table><thead><tr><th>地方</th><th>利用率3年平均</th><th>利用率2024年</th></tr></thead><tbody>
+<tr><td>南関東</td><td>3.4%</td><td>3.5%</td></tr>
+<tr><td>北海道</td><td>2.5%</td><td>3.4%</td></tr>
+<tr><td>東海</td><td>2.2%</td><td>2.4%</td></tr>
+<tr><td>近畿</td><td>2.1%</td><td>2.5%</td></tr>
+<tr><td>中国</td><td>1.7%</td><td>2.0%</td></tr>
+<tr><td>北関東</td><td>1.7%</td><td>1.7%</td></tr>
+<tr><td>九州・沖縄</td><td>1.5%</td><td>1.9%</td></tr>
+<tr><td>東北</td><td>1.3%</td><td>1.7%</td></tr>
+<tr><td>北陸</td><td>1.2%</td><td>1.4%</td></tr>
+<tr><td>甲信越</td><td>1.2%</td><td>1.3%</td></tr>
+<tr><td>四国</td><td>1.2%</td><td>1.4%</td></tr>
+</tbody></table>
+<p><img src="../figures/figure6_patient_supply_scatter.png" alt="患者側と供給側の年別比較"></p>
+<p>患者側利用率と地域のインターネット利用率の年平均Spearman相関は <strong>0.46</strong> であり、接続率だけで患者側の条件付き利用を説明できるわけではない。</p>
+<p><img src="../figures/figure7_patient_supply_quadrant.png" alt="患者側と供給側の4象限"></p>
+<p><img src="../figures/figure20_patient_provider_rank_maps.png" alt="患者居住地と医療機関所在地でみた地域分布の比較（地図）"></p>
+<h3>乖離が大きい県（3年平均の順位差）</h3>
+<table><thead><tr><th>都道府県</th><th>患者側利用率3年平均</th><th>供給側NDB割合3年平均</th><th>供給順位－患者順位</th><th>患者側年次幅</th><th>低精度目安年数</th><th>探索的類型</th></tr></thead><tbody>
+<tr><td>島根県</td><td>1.3%</td><td>0.125%</td><td>+26.3</td><td>1.4%</td><td>2</td><td>患者側低い・供給側高</td></tr>
+<tr><td>熊本県</td><td>1.3%</td><td>0.073%</td><td>+23.2</td><td>0.9%</td><td>3</td><td>患者側低い・供給側高</td></tr>
+<tr><td>福井県</td><td>1.3%</td><td>0.055%</td><td>+20.0</td><td>1.0%</td><td>2</td><td>患者側低い・供給側高</td></tr>
+<tr><td>岡山県</td><td>1.6%</td><td>0.014%</td><td>-19.5</td><td>0.9%</td><td>1</td><td>患者側高・供給側低い</td></tr>
+<tr><td>和歌山県</td><td>1.7%</td><td>0.010%</td><td>-19.2</td><td>2.9%</td><td>2</td><td>患者側高・供給側低い</td></tr>
+<tr><td>山形県</td><td>1.2%</td><td>0.042%</td><td>+18.8</td><td>2.0%</td><td>2</td><td>患者側低い・供給側高</td></tr>
+<tr><td>広島県</td><td>2.2%</td><td>0.024%</td><td>-16.5</td><td>0.5%</td><td>0</td><td>患者側高・供給側低い</td></tr>
+<tr><td>石川県</td><td>1.2%</td><td>0.037%</td><td>+15.7</td><td>0.5%</td><td>2</td><td>患者側低い・供給側高</td></tr>
+</tbody></table>
+<p>順位差が正は「患者側利用率に比べて供給側が高い」、負は「供給側に比べて患者側が高い」ことを示す。単位が違うため、ここでは大小そのものではなく県内での相対順位だけを比べた。</p>
+<p><img src="../figures/figure8_patient_internet_access.png" alt="インターネット利用率との比較"></p>
+<h2>解釈と仮説の検証</h2>
+<p>この比較は保険診療の需給不均衡の判定ではない。自己申告値には自由診療も混在し得るため、ここでは地域像がどの程度異なるかを確かめる補助的な感度分析として扱う。自己申告が高くNDB供給側が低い県では、住民が県外の医療機関を利用している、あるいは自己申告とレセプト算定の対象・期間が異なる、という仮説がある。供給側が高く自己申告が低い県では、専門施設や大規模なオンライン診療提供者が域外患者を診ている可能性がある。</p>
+<p>このうち「患者所在地と医療機関所在地の乖離」という機序自体は、無料で公開されている中医協資料で検証できる。同資料はNDBの2024年9–11月診療分について、都道府県が異なる患者・医療機関の組合せが51.1%（72,659/142,174回）と報告し、東京都所在医療機関では県外患者の割合が初診68.1%、再診等65.3%と示す。したがって、NDBの医療機関所在地を患者側分布の代替として扱わない判断には直接の根拠がある。</p>
+<p>ただし、この公開資料だけでは今回の各乖離県の患者流出入を直接検証できない。個別県の結論を強めるには、次の検証が必要である。</p>
+<ol><li>公開可能な患者住所地NDB集計の都道府県別数値を取得し、同時期の供給側NDBとの流入・流出差を計算する。</li><li>通信利用動向調査の都道府県別推計に標準誤差または設計情報が利用できる場合、調査設計に対応した区間推定または縮約推定を行う。</li><li>年齢別の患者側利用率が入手できる範囲で、都道府県の年齢構成を調整し、年齢構成による差を切り分ける。</li></ol>
+<h2>限界</h2>
+<ul><li>表15の分母はインターネット利用者であり、全住民の利用率には変換していない。インターネット利用率との単純な積も推定していない。</li><li>複雑標本・比重調整後の公表率であり、単純無作為抽出の信頼区間は不適切である。ここで示す利用者数目安は不確実性の警告であって推定標準誤差ではない。</li><li>自己申告の利用経験、NDBの保険診療の算定回数、期間、年齢対象は異なる。相関や4象限を患者移動の直接証拠としては解釈しない。</li><li>表15は保険診療と自由診療を区別しない。このため、本レポートの自己申告値をNDB保険診療の需要量、未充足需要、供給・需要比の分母には用いない。</li></ul>
+<h2>出典</h2>
+<ul><li>総務省・e-Stat：2022 <a href="https://www.e-stat.go.jp/stat-search/files?layout=dataset&amp;stat_infid=000040057188">表15</a>、<a href="https://www.e-stat.go.jp/stat-search/files?layout=dataset&amp;stat_infid=000040057181">インターネット利用経験</a>、2023 <a href="https://www.e-stat.go.jp/stat-search/files?layout=dataset&amp;stat_infid=000040185454">表15</a>、<a href="https://www.e-stat.go.jp/stat-search/files?layout=dataset&amp;stat_infid=000040185447">インターネット利用経験</a>、2024 <a href="https://www.e-stat.go.jp/stat-search/files?layout=dataset&amp;stat_infid=000040278952">表15</a>、<a href="https://www.e-stat.go.jp/stat-search/files?layout=dataset&amp;stat_infid=000040278945">インターネット利用経験</a>。</li><li>厚生労働省・中医協 <a href="https://www.mhlw.go.jp/content/10808000/001591982.pdf">情報通信機器を用いた診療の患者・医療機関住所地集計</a>（NDB 2024年9–11月診療分）。</li><li>厚生労働省・中医協 <a href="https://www.mhlw.go.jp/content/12404000/001506683.pdf">医療機関住所地と患者住所地の地域分布に関する資料</a>。</li><li>供給側の作成手順と定義：このリポジトリの <code>reports/analysis_report.qmd</code>、<code>output/tables/prefecture_standardized.csv</code>。</li></ul></body></html>
