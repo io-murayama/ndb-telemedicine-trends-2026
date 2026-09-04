@@ -14,14 +14,18 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 from matplotlib import font_manager
-from matplotlib.colors import Normalize, TwoSlopeNorm
+from matplotlib.colors import Colormap, LinearSegmentedColormap, LogNorm, Normalize, TwoSlopeNorm
 from scipy.stats import spearmanr
+from shapely import affinity
 
 JAPANESE_FONTS = ["Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", "Noto Sans CJK JP", "IPAexGothic"]
 ROOT = Path(__file__).resolve().parents[2]
 PREFECTURE_GEOJSON = ROOT / "data" / "reference" / "prefectures.geojson"
 JAPAN_XLIM = (122.5, 154.5)
 JAPAN_YLIM = (20.0, 46.0)
+PRESENTATION_BLUE_RED = LinearSegmentedColormap.from_list(
+    "presentation_blue_red", ["#3182ce", "#f7f7f7", "#e34a33"]
+)
 
 
 def setup_style() -> None:
@@ -40,8 +44,8 @@ def setup_style() -> None:
     sns.set_theme(style="whitegrid", font=selected, rc={"axes.spines.top": False, "axes.spines.right": False})
 
 
-def _save(fig: plt.Figure, path: Path) -> None:
-    if not fig.get_constrained_layout():
+def _save(fig: plt.Figure, path: Path, *, apply_tight_layout: bool = True) -> None:
+    if apply_tight_layout and not fig.get_constrained_layout():
         fig.tight_layout()
     fig.savefig(path, bbox_inches="tight")
     plt.close(fig)
@@ -61,8 +65,10 @@ def _draw_prefecture_map(
     column: str,
     axis: plt.Axes,
     *,
-    cmap: str,
+    cmap: str | Colormap,
     norm: Normalize,
+    xlim: tuple[float, float] = JAPAN_XLIM,
+    ylim: tuple[float, float] = JAPAN_YLIM,
 ) -> None:
     frame.plot(
         column=column,
@@ -73,9 +79,19 @@ def _draw_prefecture_map(
         edgecolor="white",
         missing_kwds={"color": "#e5e7eb"},
     )
-    axis.set_xlim(*JAPAN_XLIM)
-    axis.set_ylim(*JAPAN_YLIM)
+    axis.set_xlim(*xlim)
+    axis.set_ylim(*ylim)
     axis.set_axis_off()
+
+
+def _relocate_okinawa_to_inset(frame: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
+    """Move Okinawa into the Japan Sea margin for a compact presentation map."""
+    inset = frame.copy()
+    okinawa = inset["prefecture_code"].eq(47)
+    inset.loc[okinawa, "geometry"] = inset.loc[okinawa, "geometry"].apply(
+        lambda geometry: affinity.translate(geometry, xoff=2.0, yoff=11.0)
+    )
+    return inset
 
 
 def _annotate_extremes(
@@ -160,6 +176,115 @@ def plot_prefecture_change_map(
         fontsize=8,
     )
     _save(figure, output)
+
+
+def plot_patient_provider_prefecture_map(
+    patient: pd.DataFrame,
+    provider: pd.DataFrame,
+    output: Path,
+) -> None:
+    """Compare 2024 patient-residence and provider-location distributions.
+
+    The two panels intentionally share a sequential blue palette and map extent,
+    while retaining indicator-specific colour scales: the patient survey is a
+    percentage and the NDB per-capita rate has a large right tail.
+    """
+    patient_2024 = patient.loc[
+        patient["year"].eq(2024),
+        ["prefecture_code", "prefecture_name", "patient_online_rate_pct"],
+    ].copy()
+    provider_2024 = provider.loc[
+        provider["fiscal_year"].eq(2024),
+        ["prefecture_code", "prefecture_name", "rate_per_population"],
+    ].copy()
+    if len(patient_2024) != 47 or len(provider_2024) != 47:
+        raise ValueError("2024年の患者側・医療機関側データは各47都道府県必要です")
+    if patient_2024["prefecture_code"].nunique() != 47 or provider_2024["prefecture_code"].nunique() != 47:
+        raise ValueError("2024年の都道府県コードに重複があります")
+    if (provider_2024["rate_per_population"] <= 0).any():
+        raise ValueError("医療機関側の人口あたり算定回数は正の値である必要があります")
+
+    patient_frame = _relocate_okinawa_to_inset(_prefecture_geometry(patient_2024))
+    provider_frame = _relocate_okinawa_to_inset(_prefecture_geometry(provider_2024))
+    patient_norm = Normalize(vmin=0, vmax=float(patient_2024["patient_online_rate_pct"].max()))
+    provider_norm = LogNorm(
+        vmin=float(provider_2024["rate_per_population"].min()),
+        vmax=float(provider_2024["rate_per_population"].max()),
+    )
+
+    figure = plt.figure(figsize=(15.8, 6.8))
+    grid = figure.add_gridspec(
+        2,
+        4,
+        height_ratios=(1, 0.035),
+        width_ratios=(0.055, 1, 1, 0.055),
+        wspace=0.02,
+        hspace=0.04,
+        left=0.065,
+        right=0.935,
+        top=0.96,
+        bottom=0.07,
+    )
+    axes = [figure.add_subplot(grid[0, 1]), figure.add_subplot(grid[0, 2])]
+    left_colorbar_grid = grid[0, 0].subgridspec(3, 1, height_ratios=(0.12, 0.76, 0.12))
+    right_colorbar_grid = grid[0, 3].subgridspec(3, 1, height_ratios=(0.12, 0.76, 0.12))
+    colorbar_axes = [
+        figure.add_subplot(left_colorbar_grid[1]),
+        figure.add_subplot(right_colorbar_grid[1]),
+    ]
+    source_axis = figure.add_subplot(grid[1, :])
+    source_axis.set_axis_off()
+    panels = [
+        (
+            patient_frame,
+            "patient_online_rate_pct",
+            "患者側（居住地）",
+            "自己申告のオンライン診療利用率（%）",
+            patient_norm,
+        ),
+        (
+            provider_frame,
+            "rate_per_population",
+            "医療機関側（所在地）",
+            "人口10万人あたりNDB算定回数（対数目盛）",
+            provider_norm,
+        ),
+    ]
+    for axis, colorbar_axis, (frame, column, title, label, norm) in zip(
+        axes, colorbar_axes, panels, strict=True
+    ):
+        _draw_prefecture_map(
+            frame,
+            column,
+            axis,
+            cmap=PRESENTATION_BLUE_RED,
+            norm=norm,
+            xlim=(124.6, 150.0),
+            ylim=(30.0, 46.0),
+        )
+        axis.set_title(title, fontweight="bold", pad=9)
+        colorbar = figure.colorbar(
+            plt.cm.ScalarMappable(norm=norm, cmap=PRESENTATION_BLUE_RED),
+            cax=colorbar_axis,
+            orientation="vertical",
+        )
+        colorbar.set_label(label, fontsize=9)
+        colorbar.ax.tick_params(labelsize=8)
+
+    colorbar_axes[0].yaxis.set_ticks_position("left")
+    colorbar_axes[0].yaxis.set_label_position("left")
+
+    source_axis.text(
+        0.5,
+        0.5,
+        "患者側：通信利用動向調査（2024年、インターネット利用者の自己申告）"
+        "　｜　医療機関側：NDBオープンデータ（2024年度、ICT関連算定の医療機関所在地）",
+        ha="center",
+        va="center",
+        fontsize=7,
+        color="#374151",
+    )
+    _save(figure, output, apply_tight_layout=False)
 
 
 def plot_patient_supply_rank_maps(

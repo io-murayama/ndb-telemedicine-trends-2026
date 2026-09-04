@@ -226,6 +226,106 @@ plot_figure2_age_by_visit <- function(cells, codes_cfg) {
     )
 }
 
+#' Presentation version of Figure 2: show change over time within visit type.
+plot_figure2_age_trend_by_visit <- function(cells, codes_cfg) {
+  require_ggplot2()
+  df <- prepare_age_plot_data(cells, codes_cfg)
+  df$fiscal_year <- factor(df$fiscal_year, levels = c(2022, 2023, 2024))
+  age_breaks <- codes_cfg$age_groups[c(1, 5, 9, 13, 17, length(codes_cfg$age_groups))]
+
+  ggplot2::ggplot(
+    df,
+    ggplot2::aes(age_group, proportion_pct, color = fiscal_year, group = fiscal_year)
+  ) +
+    ggplot2::geom_line(linewidth = 0.9) +
+    ggplot2::geom_point(size = 1.9) +
+    ggplot2::facet_grid(visit_type_label ~ .) +
+    ggplot2::scale_color_manual(
+      values = c("2022" = "#9AA5B1", "2023" = "#4C86B7", "2024" = "#123E6A")
+    ) +
+    ggplot2::scale_x_discrete(breaks = age_breaks) +
+    ggplot2::scale_y_continuous(
+      breaks = seq(0, 1.2, by = 0.3),
+      limits = c(0, 1.2),
+      expand = ggplot2::expansion(mult = c(0, 0.03))
+    ) +
+    ggplot2::labs(
+      title = "オンライン診療の割合は若年で高く、2024年度に上昇",
+      subtitle = "年齢階級別、初診・再診・外来別の算定割合（2022–2024年度）",
+      x = "年齢階級",
+      y = "オンライン診療の割合（%）",
+      color = "年度"
+    ) +
+    ggplot2::theme_bw(base_size = 12) +
+    ggplot2::theme(
+      legend.position = "bottom",
+      legend.direction = "horizontal",
+      panel.grid.minor = ggplot2::element_blank(),
+      strip.background = ggplot2::element_rect(fill = "#E8EEF4", color = NA),
+      strip.text.y = ggplot2::element_text(face = "bold", angle = 0),
+      axis.text.x = ggplot2::element_text(size = 9),
+      plot.title = ggplot2::element_text(face = "bold")
+    )
+}
+
+#' Presentation version of Figure 2: show age-specific change over time.
+plot_figure2_age_trend <- function(cells, codes_cfg) {
+  require_ggplot2()
+  age_cells <- aggregate_cells_by_age(cells)
+  online <- aggregate(
+    online_count ~ fiscal_year + age_group,
+    data = age_cells,
+    FUN = function(x) sum(x, na.rm = TRUE)
+  )
+  denominator <- aggregate(
+    denominator_count ~ fiscal_year + age_group,
+    data = age_cells,
+    FUN = function(x) sum(x, na.rm = TRUE)
+  )
+  df <- merge(online, denominator, by = c("fiscal_year", "age_group"))
+  df$proportion_pct <- 100 * df$online_count / df$denominator_count
+  df$age_group <- factor(df$age_group, levels = codes_cfg$age_groups)
+  df$fiscal_year <- factor(df$fiscal_year, levels = c(2022, 2023, 2024))
+  age_breaks <- codes_cfg$age_groups[c(1, 5, 9, 13, 17, length(codes_cfg$age_groups))]
+
+  ggplot2::ggplot(
+    df,
+    ggplot2::aes(age_group, proportion_pct, color = fiscal_year, group = fiscal_year)
+  ) +
+    ggplot2::geom_line(linewidth = 1) +
+    ggplot2::geom_point(size = 2.2) +
+    ggplot2::annotate(
+      "segment",
+      x = 6, xend = 6, y = 0.25, yend = 0.52,
+      color = "#374151", linewidth = 0.8,
+      arrow = grid::arrow(length = grid::unit(0.18, "cm"))
+    ) +
+    ggplot2::annotate(
+      "text",
+      x = 6.2, y = 0.4, label = "2022→2024",
+      hjust = 0, color = "#374151", size = 3.5
+    ) +
+    ggplot2::scale_color_manual(
+      values = c("2022" = "#6B7280", "2023" = "#E69F00", "2024" = "#0072B2")
+    ) +
+    ggplot2::scale_x_discrete(breaks = age_breaks) +
+    ggplot2::labs(
+      title = "年齢階級別オンライン診療の算定割合の推移",
+      subtitle = "2022–2024年度",
+      x = "年齢階級",
+      y = "オンライン診療の割合（%）",
+      color = "年度"
+    ) +
+    ggplot2::theme_bw(base_size = 12) +
+    ggplot2::theme(
+      legend.position = "bottom",
+      legend.direction = "horizontal",
+      panel.grid.minor = ggplot2::element_blank(),
+      axis.text.x = ggplot2::element_text(size = 9),
+      plot.title = ggplot2::element_text(face = "bold")
+    )
+}
+
 plot_figure3_age_stratified <- function(cells, codes_cfg) {
   require_ggplot2()
   df <- prepare_age_plot_data(cells, codes_cfg)
