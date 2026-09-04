@@ -23,6 +23,8 @@ change <- utils::read.csv(change_path, fileEncoding = "UTF-8")
 
 fig1 <- plot_figure1_trend(trend)
 fig2 <- plot_figure2_age_by_visit(cells, codes_cfg)
+fig2_presentation <- plot_figure2_age_trend_by_visit(cells, codes_cfg)
+fig2_age_trend <- plot_figure2_age_trend(cells, codes_cfg)
 fig3a <- plot_figure3_age_stratified(cells, codes_cfg)
 fig3b <- plot_figure3_sex_stratified(cells)
 fig4 <- plot_figure4_change_by_age(change, codes_cfg)
@@ -37,6 +39,8 @@ if (inherits(fig1, "list")) {
 }
 
 save_figure(fig2, "figure2_age_by_visit_type.png", root = PROJECT_ROOT, width = 12, height = 5)
+save_figure(fig2_presentation, "figure2_age_trend_by_visit_type.png", root = PROJECT_ROOT, width = 12, height = 7)
+save_figure(fig2_age_trend, "figure2_age_trend.png", root = PROJECT_ROOT, width = 12, height = 5.5)
 save_figure(fig3a, "figure3a_age_stratified.png", root = PROJECT_ROOT, width = 12, height = 5)
 save_figure(fig3b, "figure3b_sex_stratified.png", root = PROJECT_ROOT, width = 10, height = 5)
 save_figure(fig4, "figure4_change_by_age.png", root = PROJECT_ROOT, width = 12, height = 8)
